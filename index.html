@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دوام X — الإدارة</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#10172A;color:#F5F3EC;font-family:'IBM Plex Sans Arabic','Noto Sans',sans-serif;min-height:100vh;}
+.page{display:none;max-width:520px;margin:0 auto;padding:22px 16px 80px;}
+.page.on{display:block;}
+.login-wrap{display:none;max-width:480px;margin:0 auto;padding:40px 18px;min-height:100vh;flex-direction:column;justify-content:center;}
+.login-wrap.on{display:flex;}
+.lang-bar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:16px;}
+.lang-btn-item{background:#1B2542;border:1px solid #2A3658;color:#8A92AC;padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;}
+.lang-btn-item.active{background:#F2A93B;color:#1a1306;border-color:#F2A93B;font-weight:700;}
+.brand{font-size:44px;font-weight:700;text-align:center;margin-bottom:4px;}
+.brand span{color:#F2A93B;}
+.sub{text-align:center;color:#8A92AC;margin-bottom:30px;font-size:13px;}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:13px;color:#8A92AC;margin-bottom:5px;}
+.field input,.field select,.field textarea{width:100%;padding:13px;background:#1B2542;border:1px solid #2A3658;border-radius:12px;color:#F5F3EC;font-size:14px;font-family:inherit;}
+.field textarea{resize:vertical;}
+.btn{width:100%;padding:15px;border:none;border-radius:13px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px;}
+.btn-amber{background:#F2A93B;color:#1a1306;}
+.btn-outline{background:transparent;border:1px solid #2A3658;color:#F5F3EC;}
+.btn-success{background:rgba(95,191,138,.15);color:#5FBF8A;border:1px solid #5FBF8A;}
+.btn-danger{background:rgba(226,96,79,.15);color:#E2604F;border:1px solid #E2604F;}
+.btn-sm{padding:10px;font-size:13px;margin-top:0;}
+.btn-row{display:flex;gap:8px;margin-top:10px;}
+.btn-row .btn{margin-top:0;}
+.err{color:#E2604F;font-size:13px;margin-top:8px;text-align:center;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.topbar h2{font-size:18px;font-weight:700;}
+.icon-btn{background:#1B2542;border:none;color:#F5F3EC;width:38px;height:38px;border-radius:10px;font-size:16px;cursor:pointer;flex-shrink:0;}
+/* DASHBOARD */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.stat-card{background:#1B2542;border-radius:14px;padding:16px;text-align:center;cursor:pointer;}
+.stat-num{font-size:30px;font-weight:700;color:#F2A93B;}
+.stat-label{font-size:12px;color:#8A92AC;margin-top:4px;}
+.stat-card.warn .stat-num{color:#E2604F;}
+.nav-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.nav-card{background:#1B2542;border:1px solid #2A3658;border-radius:14px;padding:18px 12px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:#F5F3EC;}
+.nav-card:active{background:#222E50;}
+/* ALERTS */
+.alert-card{border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+.alert-card.red{background:rgba(226,96,79,.15);border:1px solid rgba(226,96,79,.3);}
+.alert-card.amber{background:rgba(242,169,59,.15);border:1px solid rgba(242,169,59,.3);}
+.alert-card.green{background:rgba(95,191,138,.15);border:1px solid rgba(95,191,138,.3);}
+.alert-icon{font-size:22px;}
+.alert-text{font-size:13px;font-weight:600;}
+.alert-sub{font-size:12px;color:#8A92AC;margin-top:2px;}
+/* LISTS */
+.list-row{display:flex;justify-content:space-between;align-items:center;background:#1B2542;border-radius:12px;padding:13px 14px;margin-bottom:8px;cursor:pointer;}
+.lr-name{font-weight:600;font-size:14px;margin-bottom:3px;}
+.lr-sub{font-size:12px;color:#8A92AC;}
+.badge{display:inline-block;font-size:12px;padding:4px 10px;border-radius:20px;font-weight:600;white-space:nowrap;}
+.badge.active,.badge.approved{background:rgba(95,191,138,.15);color:#5FBF8A;}
+.badge.pending{background:rgba(242,169,59,.15);color:#F2A93B;}
+.badge.rejected,.badge.terminated{background:rgba(226,96,79,.15);color:#E2604F;}
+.badge.resigned{background:rgba(138,146,172,.15);color:#8A92AC;}
+.sec-title{font-size:13px;color:#F2A93B;font-weight:700;margin:16px 0 8px;}
+.approval-card{background:#1B2542;border-radius:12px;padding:14px;margin-bottom:10px;}
+.approval-name{font-weight:700;margin-bottom:4px;}
+.approval-sub{font-size:13px;color:#8A92AC;margin-bottom:2px;}
+.empty{color:#8A92AC;font-size:13px;text-align:center;margin-top:30px;}
+.msg{text-align:center;font-size:13px;margin-top:10px;}
+.ok{color:#5FBF8A;}.ko{color:#E2604F;}
+.check-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.check-row input{width:auto;}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #2A3658;}
+.info-row:last-child{border-bottom:none;}
+.info-row .lbl{font-size:13px;color:#8A92AC;}
+.info-row .val{font-size:14px;font-weight:600;}
+/* PHOTO */
+.photo-wrap{text-align:center;margin-bottom:16px;}
+.photo-circle{width:80px;height:80px;border-radius:50%;background:#1B2542;border:2px dashed #2A3658;margin:0 auto 8px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;}
+.photo-circle img{width:100%;height:100%;object-fit:cover;}
+/* CHART */
+.chart-wrap{background:#1B2542;border-radius:14px;padding:16px;margin-bottom:16px;}
+.chart-title{font-size:13px;font-weight:700;margin-bottom:12px;color:#8A92AC;}
+/* ATTENDANCE TABLE */
+.att-table{width:100%;border-collapse:collapse;font-size:12px;}
+.att-table th{background:#222E50;padding:8px;text-align:center;color:#8A92AC;}
+.att-table td{padding:8px;text-align:center;border-bottom:1px solid #2A3658;}
+.att-table tr:last-child td{border-bottom:none;}
+.att-present{color:#5FBF8A;}
+.att-absent{color:#E2604F;}
+.att-leave{color:#F2A93B;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="p-login" class="login-wrap on">
+  <div class="lang-bar">
+    <button class="lang-btn-item active" onclick="setLang('ar')">🇰🇼 AR</button>
+    <button class="lang-btn-item" onclick="setLang('en')">🇬🇧 EN</button>
+    <button class="lang-btn-item" onclick="setLang('hi')">🇮🇳 HI</button>
+  </div>
+  <div class="brand">دوام<span>X</span></div>
+  <p class="sub" id="sub-title">لوحة إدارة الموارد البشرية</p>
+  <div class="field"><label id="lbl-code">كود الشركة</label><input id="l-code" autocapitalize="characters" placeholder="AHLIA"></div>
+  <div class="field"><label id="lbl-emp">الرقم الوظيفي</label><input id="l-emp" placeholder="1001"></div>
+  <div class="field"><label id="lbl-pass">كلمة المرور</label><input id="l-pass" type="password"></div>
+  <button class="btn btn-amber" id="btn-login" onclick="doLogin()">تسجيل الدخول</button>
+  <p class="err" id="l-err"></p>
+</div>
+
+<!-- DASHBOARD -->
+<div id="p-dash" class="page">
+  <div class="topbar">
+    <div>
+      <p style="font-size:16px;font-weight:700;" id="d-name"></p>
+      <p style="font-size:12px;color:#8A92AC;" id="d-company"></p>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <div class="lang-bar" style="margin:0;">
+        <button class="lang-btn-item active" onclick="setLang('ar')">AR</button>
+        <button class="lang-btn-item" onclick="setLang('en')">EN</button>
+        <button class="lang-btn-item" onclick="setLang('hi')">HI</button>
+      </div>
+      <button class="icon-btn" onclick="doLogout()">&#x23CF;</button>
+    </div>
+  </div>
+
+  <!-- تنبيهات مهمة -->
+  <div id="alerts-section"></div>
+
+  <!-- الإحصائيات -->
+  <div class="stat-grid">
+    <div class="stat-card" onclick="loadEmployees();show('p-employees')">
+      <div class="stat-num" id="s-emp">-</div>
+      <div class="stat-label" id="s-emp-label">الموظفين</div>
+    </div>
+    <div class="stat-card" onclick="loadApprovals();show('p-approvals')">
+      <div class="stat-num" id="s-pend">-</div>
+      <div class="stat-label" id="s-pend-label">طلبات معلقة</div>
+    </div>
+    <div class="stat-card warn" id="s-res-card">
+      <div class="stat-num" id="s-res-exp">-</div>
+      <div class="stat-label" id="s-res-label">إقامات تنتهي قريباً</div>
+    </div>
+    <div class="stat-card" id="s-today-card">
+      <div class="stat-num" id="s-today">-</div>
+      <div class="stat-label" id="s-today-label">حضور اليوم</div>
+    </div>
+  </div>
+
+  <!-- Chart الحضور -->
+  <div class="chart-wrap">
+    <p class="chart-title" id="chart-lbl">نسبة الحضور - آخر 7 أيام</p>
+    <canvas id="att-chart" height="150"></canvas>
+  </div>
+
+  <!-- القايمة -->
+  <div class="nav-grid">
+    <div class="nav-card" onclick="loadEmployees();show('p-employees')">👤<br><span>الموظفين</span></div>
+    <div class="nav-card" onclick="loadApprovals();show('p-approvals')">📋<br><span>طلبات الإجازات</span></div>
+    <div class="nav-card" onclick="loadLeaveTypes();show('p-leave-types')">🗂️<br><span>أنواع الإجازات</span></div>
+    <div class="nav-card" onclick="loadDepartments();show('p-departments')">🏢<br><span>الأقسام</span></div>
+    <div class="nav-card" onclick="openSalaryAdmin();show('p-salary')">💰<br><span>الرواتب</span></div>
+    <div class="nav-card" onclick="loadAdvancesAdmin();show('p-adv-admin')">💳<br><span>السلف</span></div>
+    <div class="nav-card" onclick="loadAttendanceReport();show('p-att-report')">📊<br><span>تقرير الحضور</span></div>
+    <div class="nav-card" onclick="loadExpiryReport();show('p-expiry')">⚠️<br><span>الوثائق المنتهية</span></div>
+        <div class="nav-card" onclick="loadEmployees();show('p-import')">📥<br><span id="nav-import">استيراد من إكسل</span></div>
+  </div>
+</div>
+
+<!-- EMPLOYEES -->
+<div id="p-employees" class="page">
+  <div class="topbar">
+    <button class="icon-btn" onclick="show('p-dash')">&#x2192;</button>
+    <h2 id="tt-employees">الموظفين</h2>
+    <button class="icon-btn" onclick="openEmpForm(null)" title="إضافة">+</button>
+    <button class="icon-btn" onclick="loadEmployees();show('p-import')" title="استيراد">📥</button>
+  </div>
+  <div class="field">
+    <input id="emp-search" placeholder="🔍 بحث بالاسم أو الرقم الوظيفي" oninput="filterEmployees(this.value)">
+  </div>
+  <div id="emp-list"></div>
+</div>
+
+<!-- EMPLOYEE FORM -->
+<div id="p-emp-form" class="page">
+  <div class="topbar">
+    <button class="icon-btn" onclick="show('p-employees')">&#x2192;</button>
+    <h2 id="ef-title">إضافة موظف</h2>
+    <span style="width:38px"></span>
+  </div>
+  <div id="ef-pass-wrap">
+    <div class="field"><label id="ef-lbl-pass">كلمة مرور الموظف</label><input type="text" id="ef-pass" placeholder="123456"></div>
+  </div>
+  <div class="photo-wrap">
+    <div class="photo-circle" onclick="document.getElementById('ef-photo-input').click()">
+      <img id="ef-photo-preview" src="" style="display:none">
+      <span id="ef-photo-icon">📷</span>
+    </div>
+    <input type="file" id="ef-photo-input" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+    <p style="font-size:12px;color:#8A92AC;">اضغط لإضافة صورة (كاميرا أو جاليري)</p>
+  </div>
+  <div class="sec-title" id="ef-sec-basic">البيانات الأساسية</div>
+  <div class="field"><label id="ef-lbl-name">الاسم الكامل *</label><input id="ef-name"></div>
+  <div class="field"><label id="ef-lbl-num">الرقم الوظيفي *</label><input id="ef-number"></div>
+  <div class="field"><label id="ef-lbl-phone">رقم الهاتف</label><input id="ef-phone" type="tel"></div>
+  <div class="field"><label>القسم</label><select id="ef-dept"><option value="">—</option></select></div>
+  <div class="field"><label id="ef-lbl-job">المسمى الوظيفي</label><input id="ef-title2"></div>
+  <div class="field"><label id="ef-lbl-hire">تاريخ التعيين</label><input type="date" id="ef-hire"></div>
+  <div class="field"><label id="ef-lbl-cend">تاريخ انتهاء العقد</label><input type="date" id="ef-contract-end"></div>
+  <div class="field"><label id="ef-lbl-nat">الجنسية</label><input id="ef-nat"></div>
+  <div class="field"><label id="ef-lbl-civil">الرقم المدني</label><input id="ef-civil"></div>
+  <div class="field"><label id="ef-lbl-contract">نوع العقد</label>
+    <select id="ef-contract">
+      <option value="permanent" id="opt-perm">دائم</option>
+      <option value="temporary" id="opt-temp">مؤقت</option>
+      <option value="part_time" id="opt-part">جزئي</option>
+    </select>
+  </div>
+  <div class="field"><label id="ef-lbl-status">الحالة</label>
+    <select id="ef-status">
+      <option value="active" id="opt-act">نشط</option>
+      <option value="resigned" id="opt-res">مستقيل</option>
+      <option value="terminated" id="opt-term">منتهي الخدمة</option>
+    </select>
+  </div>
+  <div class="sec-title" id="ef-sec-sal">الراتب</div>
+  <div class="field"><label id="ef-lbl-basic">الراتب الأساسي (د.ك)</label><input type="number" id="ef-basic" step="0.001"></div>
+  <div class="field"><label>بدل سكن</label><input type="number" id="ef-housing" step="0.001"></div>
+  <div class="field"><label>بدل نقل</label><input type="number" id="ef-transport" step="0.001"></div>
+  <div class="field"><label>بدلات أخرى</label><input type="number" id="ef-other" step="0.001"></div>
+  <div class="sec-title" id="ef-sec-res">الإقامة</div>
+  <div class="field"><label id="ef-lbl-resnum">رقم الإقامة</label><input id="ef-res-num"></div>
+  <div class="field"><label>تاريخ الإصدار</label><input type="date" id="ef-res-issue"></div>
+  <div class="field"><label>تاريخ الانتهاء</label><input type="date" id="ef-res-exp"></div>
+  <div class="sec-title" id="ef-sec-pass">جواز السفر</div>
+  <div class="field"><label id="ef-lbl-passnum">رقم الجواز</label><input id="ef-pass-num"></div>
+  <div class="field"><label>تاريخ الإصدار</label><input type="date" id="ef-pass-issue"></div>
+  <div class="field"><label>تاريخ الانتهاء</label><input type="date" id="ef-pass-exp"></div>
+  <button class="btn btn-amber" id="ef-btn-save" onclick="saveEmployee()">حفظ البيانات</button>
+  <p class="msg" id="ef-msg"></p>
+</div>
+
+<!-- APPROVALS -->
+<div id="p-approvals" class="page">
+  <div class="topbar"><button class="icon-btn" onclick="show('p-dash')">&#x2192;</button><h2 id="tt-approvals">طلبات الإجازات</h2><span style="width:38px"></span></div>
+  <div id="approvals-list"></div>
+</div>
+
+<!-- LEAVE TYPES -->
+<div id="p-leave-types" class="page">
+  <div class="topbar"><button class="icon-btn" onclick="show('p-dash')">&#x2192;</button><h2 id="tt-leavetypes">أنواع الإجازات</h2><span style="width:38px"></span></div>
+  <div id="lt-list"></div>
+  <div class="sec-title" id="lt-add-title">إضافة نوع جديد</div>
+  <div class="field"><label id="lt-lbl-name">اسم الإجازة</label><input id="lt-name"></div>
+  <div class="field"><label id="lt-lbl-days">عدد الأيام في السنة</label><input type="number" id="lt-days"></div>
+  <div class="check-row"><input type="checkbox" id="lt-paid" checked><label>مدفوعة</label></div>
+  <button class="btn btn-amber" onclick="addLeaveType()" style="margin-top:12px">إضافة</button>
+</div>
+
+<!-- DEPARTMENTS -->
+<div id="p-departments" class="page">
+  <div class="topbar"><button class="icon-btn" onclick="show('p-dash')">&#x2192;</button><h2 id="tt-depts">الأقسام</h2><span style="width:38px"></span></div>
+  <div id="dept-list"></div>
+  <div class="sec-title" id="dept-add-title">إضافة قسم جديد</div>
+  <div class="field"><label id="dept-lbl-name">اسم القسم</label><input id="dept-name"></div>
+  <button class="btn btn-amber" onclick="addDept()" style="margin-top:12px">إضافة</button>
+</div>
+
+<!-- SALARY -->
+<div id="p-salary" class="page">
+  <div class="topbar"><button class="icon-btn" onclick="show('p-dash')">&#x2192;</button><h2 id="tt-salary">اشعارات الرواتب</h2><span style="width:38px"></span></div>
+  <div class="field"><label id="sal-lbl-emp">اختر الموظف</label><select id="sal-emp-sel"></select></div>
+  <div class="field"><label id="sal-lbl-month">الشهر</label>
+    <select id="sal-month">
+      <option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option>
+      <option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option>
+      <option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option>
+      <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+    </select>
+  </div>
+  <div class="field"><label id="sal-lbl-year">السنة</label><input type="number" id="sal-year" value="2026"></div>
+  <button class="btn btn-outline" id="sal-btn-load" onclick="loadSalaryData()" style="margin-bottom:14px">تحميل البيانات من الحضور</button>
+  <div id="sal-auto-data" style="display:none">
+    <div class="sec-title" id="sal-auto-title">البيانات المحسوبة تلقائياً</div>
+    <div id="sal-auto-content"></div>
+  </div>
+  <div class="sec-title" id="sal-earn-title">المستحقات</div>
+  <div class="field"><label id="sal-lbl-basic">الراتب الأساسي</label><input type="number" id="sal-basic" step="0.001"></div>
+  <div class="field"><label id="sal-lbl-house">بدل سكن</label><input type="number" id="sal-housing" step="0.001"></div>
+  <div class="field"><label id="sal-lbl-trans">بدل نقل</label><input type="number" id="sal-transport" step="0.001"></div>
+  <div class="field"><label id="sal-lbl-other">بدلات أخرى</label><input type="number" id="sal-other" step="0.001"></div>
+  <div class="field"><label id="sal-lbl-otn">ساعات أوفر تايم عادي</label><input type="number" id="sal-ot-normal" step="0.5" value="0"></div>
+  <div class="field"><label id="sal-lbl-otf">ساعات أوفر تايم جمعة</label><input type="number" id="sal-ot-fri" step="0.5" value="0"></div>
+  <div class="field"><label id="sal-lbl-oth">ساعات أوفر تايم عيد</label><input type="number" id="sal-ot-hol" step="0.5" value="0"></div>
+  <div class="sec-title" id="sal-ded-title">الاستقطاعات</div>
+  <div class="field"><label id="sal-lbl-ded">خصومات</label><input type="number" id="sal-deduct" step="0.001" value="0"></div>
+  <div class="field"><label id="sal-lbl-adv">قسط سلفة</label><input type="number" id="sal-adv-deduct" step="0.001" value="0"></div>
+  <div class="field"><label id="sal-lbl-notes">ملاحظات</label><textarea id="sal-notes" rows="2"></textarea></div>
+  <div id="sal-net-preview" style="background:#1B2542;border-radius:12px;padding:16px;margin:10px 0;text-align:center;display:none">
+    <p style="color:#8A92AC;font-size:13px;" id="sal-net-lbl">صافي الراتب المحسوب</p>
+    <p style="font-size:28px;font-weight:700;color:#F2A93B;" id="sal-net-val">0.000 د.ك</p>
+  </div>
+  <button class="btn btn-outline" id="sal-btn-calc" onclick="calcAndPreview()">حساب الصافي</button>
+  <button class="btn btn-amber" id="sal-btn-issue" onclick="issueSalarySlip()" style="margin-top:8px">اصدار كشف الراتب</button>
+  <p class="msg" id="sal-msg"></p>
+</div>
+
+<!-- ADVANCES ADMIN -->
+<div id="p-adv-admin" class="page">
+  <div class="topbar"><button class="icon-btn" onclick="show('p-dash')">&#x2192;</button><h2 id="tt-advances">طلبات السلف</h2><span style="width:38px"></span></div>
+  <div id="adv-admin-list"></div>
+</div>
+
+<!-- ATTENDANCE REPORT -->
+<div id="p-att-report" class="page">
+  <div class="topbar"><button class="icon-btn" onclick="show('p-dash')">&#x2192;</button><h2 id="tt-report">تقرير الحضور</h2><span style="width:38px"></span></div>
+  <div class="field"><label id="rpt-lbl-emp">اختر الموظف</label><select id="rpt-emp-sel"></select></div>
+  <div class="field"><label id="rpt-lbl-month">الشهر</label>
+    <select id="rpt-month">
+      <option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option>
+      <option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option>
+      <option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option>
+      <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+    </select>
+  </div>
+  <div class="field"><label id="rpt-lbl-year">السنة</label><input type="number" id="rpt-year" value="2026"></div>
+  <button class="btn btn-outline" id="rpt-btn-gen" onclick="generateReport()">عرض التقرير</button>
+  <div id="rpt-content" style="margin-top:16px;"></div>
+</div>
+
+<!-- EXPIRY REPORT -->
+<div id="p-expiry" class="page">
+  <div class="topbar"><button class="icon-btn" onclick="show('p-dash')">&#x2192;</button><h2 id="tt-expiry">الوثائق المنتهية قريباً</h2><span style="width:38px"></span></div>
+  <div id="expiry-list"></div>
+</div>
+
+<script>
+const SB='https://hldtyfdgvraveadfllsz.supabase.co';
+const KEY='sb_publishable_R2_-i4lG2pfwaUbr0LR_kg_4SHmo4q2';
+function getToken(){return sessionStorage.getItem('dawamx_adm_token');}
+function setToken(t){if(t)sessionStorage.setItem('dawamx_adm_token',t);else sessionStorage.removeItem('dawamx_adm_token');}
+function getUserId(){return sessionStorage.getItem('dawamx_adm_uid');}
+function setUserId(u){if(u)sessionStorage.setItem('dawamx_adm_uid',u);else sessionStorage.removeItem('dawamx_adm_uid');}
+let profile=null,companyId=null,employees=[],departments=[];
+let photoDataUrl=null,attChart=null;
+var lang='ar';
+
+var TR={
+ar:{login_title:"لوحة إدارة الموارد البشرية",lbl_code:"كود الشركة",lbl_emp:"الرقم الوظيفي",lbl_pass:"كلمة المرور",btn_login:"تسجيل الدخول",err_creds:"بيانات الدخول غير صحيحة",err_notadmin:"هذا الحساب ليس حساب إدارة",stat_emp:"الموظفين",stat_pend:"طلبات معلقة",stat_res:"إقامات تنتهي قريباً",stat_today:"حضور اليوم",chart_title:"نسبة الحضور - آخر 7 أيام",nav_emp:"الموظفين",nav_leave:"طلبات الإجازات",nav_lt:"أنواع الإجازات",nav_dept:"الأقسام",nav_sal:"الرواتب",nav_adv:"السلف",nav_rpt:"تقرير الحضور",nav_exp:"الوثائق المنتهية",nav_import:"استيراد من إكسل",no_emp:"لا يوجد موظفين",no_req:"لا توجد طلبات معلقة",no_adv:"لا توجد طلبات سلف",no_exp:"لا توجد وثائق تنتهي خلال 90 يوم",approve:"موافقة",reject:"رفض",kwd:"د.ك",hrs:"ساعة",days:"يوم",btn_save:"حفظ البيانات",btn_load:"تحميل البيانات من الحضور",btn_calc:"حساب الصافي",btn_issue:"اصدار كشف الراتب",btn_gen:"عرض التقرير",st_pending:"قيد المراجعة",st_approved:"موافق",st_rejected:"مرفوض",st_settled:"مسدد",add_lt:"إضافة نوع جديد",add_dept:"إضافة قسم جديد",sec_earn:"المستحقات",sec_ded:"الاستقطاعات",auto_title:"البيانات المحسوبة تلقائياً",sal_basic:"الراتب الأساسي",sal_house:"بدل سكن",sal_trans:"بدل نقل",sal_other:"بدلات أخرى",sal_otn:"ساعات أوفر تايم عادي",sal_otf:"ساعات أوفر تايم جمعة",sal_oth:"ساعات أوفر تايم عيد",sal_ded:"خصومات",sal_adv:"قسط سلفة",sal_notes:"ملاحظات",sal_net:"صافي الراتب المحسوب",lt_name:"اسم الإجازة",lt_days:"عدد الأيام في السنة",lt_paid:"مدفوعة",dept_name:"اسم القسم",sel_emp:"اختر الموظف",sel_month:"الشهر",sel_year:"السنة",import_title:"استيراد موظفين من إكسل",import_btn:"اختر ملف إكسل",import_preview:"معاينة البيانات",import_confirm:"استيراد الكل",import_err:"خطأ في الاستيراد",import_pass_lbl:"كلمة مرور مبدئية لجميع الموظفين",ef_pass:"كلمة مرور الموظف",ef_name:"الاسم الكامل",ef_num:"الرقم الوظيفي",ef_phone:"رقم الهاتف",ef_job:"المسمى الوظيفي",ef_hire:"تاريخ التعيين",ef_cend:"تاريخ انتهاء العقد",ef_nat:"الجنسية",ef_civil:"الرقم المدني",ef_contract:"نوع العقد",ef_status:"الحالة",sec_basic:"البيانات الأساسية",sec_sal:"الراتب",ef_basic:"الراتب الأساسي (د.ك)",ef_house:"بدل سكن",ef_trans:"بدل نقل",ef_other:"بدلات أخرى",sec_res:"الإقامة",ef_resnum:"رقم الإقامة",sec_pass:"جواز السفر",ef_passnum:"رقم الجواز",btn_add:"إضافة",ct_perm:"دائم",ct_temp:"مؤقت",ct_part:"جزئي",st_act:"نشط",st_res_emp:"مستقيل",st_term:"منتهي الخدمة"},
+en:{login_title:"HR Management Panel",lbl_code:"Company Code",lbl_emp:"Employee Number",lbl_pass:"Password",btn_login:"Sign In",err_creds:"Invalid credentials",err_notadmin:"This account is not an admin account",stat_emp:"Employees",stat_pend:"Pending Requests",stat_res:"Residency Expiring",stat_today:"Attendance Today",chart_title:"Attendance Rate - Last 7 Days",nav_emp:"Employees",nav_leave:"Leave Requests",nav_lt:"Leave Types",nav_dept:"Departments",nav_sal:"Salaries",nav_adv:"Advances",nav_rpt:"Attendance Report",nav_exp:"Expiring Documents",nav_import:"Import from Excel",no_emp:"No employees",no_req:"No pending requests",no_adv:"No advance requests",no_exp:"No documents expiring in 90 days",approve:"Approve",reject:"Reject",kwd:"KWD",hrs:"hrs",days:"days",btn_save:"Save",btn_load:"Load from Attendance",btn_calc:"Calculate Net",btn_issue:"Issue Salary Slip",btn_gen:"Generate Report",st_pending:"Pending",st_approved:"Approved",st_rejected:"Rejected",st_settled:"Settled",add_lt:"Add New Type",add_dept:"Add New Department",sec_earn:"Earnings",sec_ded:"Deductions",auto_title:"Auto-calculated from attendance",sal_basic:"Basic Salary",sal_house:"Housing Allowance",sal_trans:"Transport Allowance",sal_other:"Other Allowances",sal_otn:"Normal Overtime Hours",sal_otf:"Friday Overtime Hours",sal_oth:"Holiday Overtime Hours",sal_ded:"Deductions",sal_adv:"Advance Installment",sal_notes:"Notes",sal_net:"Calculated Net Salary",lt_name:"Leave Name",lt_days:"Days Per Year",lt_paid:"Paid",dept_name:"Department Name",sel_emp:"Select Employee",sel_month:"Month",sel_year:"Year",import_title:"Import Employees from Excel",import_btn:"Choose Excel File",import_preview:"Preview Data",import_confirm:"Import All",import_err:"Import error",import_pass_lbl:"Default password for all employees",ef_pass:"Employee Password",ef_name:"Full Name",ef_num:"Employee Number",ef_phone:"Phone",ef_job:"Job Title",ef_hire:"Hire Date",ef_cend:"Contract End Date",ef_nat:"Nationality",ef_civil:"Civil ID",ef_contract:"Contract Type",ef_status:"Status",sec_basic:"Basic Information",sec_sal:"Salary",ef_basic:"Basic Salary (KWD)",ef_house:"Housing Allowance",ef_trans:"Transport Allowance",ef_other:"Other Allowances",sec_res:"Residency",ef_resnum:"Residency No.",sec_pass:"Passport",ef_passnum:"Passport No.",btn_add:"Add",ct_perm:"Permanent",ct_temp:"Temporary",ct_part:"Part Time",st_act:"Active",st_res_emp:"Resigned",st_term:"Terminated"},
+hi:{login_title:"HR प्रबंधन पैनल",lbl_code:"कंपनी कोड",lbl_emp:"कर्मचारी संख्या",lbl_pass:"पासवर्ड",btn_login:"लॉगिन करें",err_creds:"गलत जानकारी",err_notadmin:"यह खाता एडमिन नहीं है",stat_emp:"कर्मचारी",stat_pend:"लंबित अनुरोध",stat_res:"निवास समाप्ति",stat_today:"आज उपस्थिति",chart_title:"उपस्थिति दर - अंतिम 7 दिन",nav_emp:"कर्मचारी",nav_leave:"अवकाश अनुरोध",nav_lt:"अवकाश प्रकार",nav_dept:"विभाग",nav_sal:"वेतन",nav_adv:"अग्रिम",nav_rpt:"उपस्थिति रिपोर्ट",nav_exp:"समाप्त दस्तावेज़",nav_import:"Excel से आयात",no_emp:"कोई कर्मचारी नहीं",no_req:"कोई लंबित अनुरोध नहीं",no_adv:"कोई अग्रिम नहीं",no_exp:"90 दिनों में कोई दस्तावेज़ नहीं",approve:"अनुमोदित",reject:"अस्वीकार",kwd:"KWD",hrs:"घंटे",days:"दिन",btn_save:"सहेजें",btn_load:"उपस्थिति से लोड",btn_calc:"शुद्ध गणना",btn_issue:"वेतन पर्ची जारी करें",btn_gen:"रिपोर्ट देखें",st_pending:"लंबित",st_approved:"अनुमोदित",st_rejected:"अस्वीकार",st_settled:"चुकाया",add_lt:"नया प्रकार जोड़ें",add_dept:"नया विभाग जोड़ें",sec_earn:"आय",sec_ded:"कटौती",auto_title:"उपस्थिति से स्वतः गणना",sal_basic:"मूल वेतन",sal_house:"आवास भत्ता",sal_trans:"परिवहन भत्ता",sal_other:"अन्य भत्ते",sal_otn:"सामान्य ओवरटाइम",sal_otf:"शुक्रवार ओवरटाइम",sal_oth:"छुट्टी ओवरटाइम",sal_ded:"कटौती",sal_adv:"अग्रिम किस्त",sal_notes:"नोट्स",sal_net:"शुद्ध वेतन",lt_name:"अवकाश नाम",lt_days:"प्रति वर्ष दिन",lt_paid:"भुगतान",dept_name:"विभाग नाम",sel_emp:"कर्मचारी चुनें",sel_month:"महीना",sel_year:"वर्ष",import_title:"Excel से कर्मचारी आयात",import_btn:"Excel फ़ाइल चुनें",import_preview:"डेटा पूर्वावलोकन",import_confirm:"सभी आयात करें",import_err:"आयात त्रुटि",import_pass_lbl:"सभी के लिए डिफ़ॉल्ट पासवर्ड",ef_pass:"कर्मचारी पासवर्ड",ef_name:"पूरा नाम",ef_num:"कर्मचारी संख्या",ef_phone:"फोन",ef_job:"पद",ef_hire:"नियुक्ति तिथि",ef_cend:"अनुबंध समाप्ति",ef_nat:"राष्ट्रीयता",ef_civil:"सिविल आईडी",ef_contract:"अनुबंध प्रकार",ef_status:"स्थिति",sec_basic:"मूल जानकारी",sec_sal:"वेतन",ef_basic:"मूल वेतन (KWD)",ef_house:"आवास भत्ता",ef_trans:"परिवहन भत्ता",ef_other:"अन्य भत्ते",sec_res:"निवास",ef_resnum:"निवास संख्या",sec_pass:"पासपोर्ट",ef_passnum:"पासपोर्ट संख्या",btn_add:"जोड़ें",ct_perm:"स्थायी",ct_temp:"अस्थायी",ct_part:"अंशकालिक",st_act:"सक्रिय",st_res_emp:"इस्तीफा",st_term:"समाप्त"}
+};
+function t(k){return(TR[lang]&&TR[lang][k])||k;}
+
+function applyTranslations(){
+  var dir=lang==='ar'?'rtl':'ltr';
+  document.documentElement.dir=dir;
+  document.documentElement.lang=lang;
+  var ids={
+    'lbl-code':'lbl_code','lbl-emp':'lbl_emp','lbl-pass':'lbl_pass','btn-login':'btn_login',
+    'sub-title':'login_title',
+    's-emp-label':'stat_emp','s-pend-label':'stat_pend','s-res-label':'stat_res','s-today-label':'stat_today',
+    'chart-lbl':'chart_title',
+    'tt-employees':'nav_emp','tt-approvals':'nav_leave','tt-leavetypes':'nav_lt',
+    'tt-depts':'nav_dept','tt-salary':'nav_sal','tt-advances':'nav_adv',
+    'tt-report':'nav_rpt','tt-expiry':'nav_exp','tt-import':'import_title',
+    'lt-add-title':'add_lt','lt-lbl-name':'lt_name','lt-lbl-days':'lt_days','lt-lbl-paid':'lt_paid',
+    'dept-add-title':'add_dept','dept-lbl-name':'dept_name',
+    'sal-lbl-emp':'sel_emp','sal-lbl-month':'sel_month','sal-lbl-year':'sel_year',
+    'sal-earn-title':'sec_earn','sal-ded-title':'sec_ded','sal-auto-title':'auto_title',
+    'sal-lbl-basic':'sal_basic','sal-lbl-house':'sal_house','sal-lbl-trans':'sal_trans','sal-lbl-other':'sal_other',
+    'sal-lbl-otn':'sal_otn','sal-lbl-otf':'sal_otf','sal-lbl-oth':'sal_oth',
+    'sal-lbl-ded':'sal_ded','sal-lbl-adv':'sal_adv','sal-lbl-notes':'sal_notes','sal-net-lbl':'sal_net',
+    'rpt-lbl-emp':'sel_emp','rpt-lbl-month':'sel_month','rpt-lbl-year':'sel_year',
+    'ef-lbl-pass':'ef_pass','ef-sec-basic':'sec_basic','ef-lbl-name':'ef_name',
+    'ef-lbl-num':'ef_num','ef-lbl-phone':'ef_phone','ef-lbl-job':'ef_job',
+    'ef-lbl-hire':'ef_hire','ef-lbl-cend':'ef_cend','ef-lbl-nat':'ef_nat','ef-lbl-civil':'ef_civil',
+    'ef-lbl-contract':'ef_contract','ef-lbl-status':'ef_status',
+    'ef-sec-sal':'sec_sal','ef-lbl-basic':'ef_basic','ef-lbl-house':'ef_house',
+    'ef-lbl-trans':'ef_trans','ef-lbl-other':'ef_other',
+    'ef-sec-res':'sec_res','ef-lbl-resnum':'ef_resnum',
+    'ef-sec-pass':'sec_pass','ef-lbl-passnum':'ef_passnum','ef-btn-save':'btn_save',
+    'import-btn-choose':'import_btn','import-preview-title':'import_preview',
+    'import-btn-confirm':'import_confirm','import-pass-lbl':'import_pass_lbl',
+    'sub-title':'login_title',
+    's-emp-label':'stat_emp','s-pend-label':'stat_pend','s-res-label':'stat_res','s-today-label':'stat_today',
+    'chart-lbl':'chart_title',
+    'tt-employees':'nav_emp','tt-approvals':'nav_leave','tt-leavetypes':'nav_lt',
+    'tt-depts':'nav_dept','tt-salary':'nav_sal','tt-advances':'nav_adv',
+    'tt-report':'nav_rpt','tt-expiry':'nav_exp',
+    'lt-add-title':'add_lt','lt-lbl-name':'lt_name','lt-lbl-days':'lt_days','lt-lbl-paid':'lt_paid',
+    'dept-add-title':'add_dept','dept-lbl-name':'dept_name',
+    'sal-lbl-emp':'sel_emp','sal-lbl-month':'sel_month','sal-lbl-year':'sel_year',
+    'sal-earn-title':'sec_earn','sal-ded-title':'sec_ded','sal-auto-title':'auto_title',
+    'sal-lbl-basic':'sal_basic','sal-lbl-house':'sal_house','sal-lbl-trans':'sal_trans','sal-lbl-other':'sal_other',
+    'sal-lbl-otn':'sal_otn','sal-lbl-otf':'sal_otf','sal-lbl-oth':'sal_oth',
+    'sal-lbl-ded':'sal_ded','sal-lbl-adv':'sal_adv','sal-lbl-notes':'sal_notes','sal-net-lbl':'sal_net',
+    'rpt-lbl-emp':'sel_emp','rpt-lbl-month':'sel_month','rpt-lbl-year':'sel_year'
+  };
+  Object.keys(ids).forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=t(ids[id]);});
+  // Translate select options
+  var optMap={'opt-perm':'ct_perm','opt-temp':'ct_temp','opt-part':'ct_part','opt-act':'st_act','opt-res':'st_res_emp','opt-term':'st_term'};
+  Object.keys(optMap).forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=t(optMap[id]);});
+  // Translate nav cards
+  var navSpans=document.querySelectorAll('.nav-card span');
+  var navKeys=['nav_emp','nav_leave','nav_lt','nav_dept','nav_sal','nav_adv','nav_rpt','nav_exp'];
+  navSpans.forEach(function(el,i){if(navKeys[i])el.textContent=t(navKeys[i]);});
+  var sh=document.getElementById('emp-search');
+  if(sh)sh.placeholder=lang==='ar'?'🔍 بحث بالاسم أو الرقم الوظيفي':lang==='hi'?'🔍 नाम से खोजें':'🔍 Search by name or number';
+  // Update buttons
+  var btnMap={'sal-btn-load':'btn_load','sal-btn-calc':'btn_calc','sal-btn-issue':'btn_issue','rpt-btn-gen':'btn_gen'};
+  Object.keys(btnMap).forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=t(btnMap[id]);});
+  var dir=lang==='ar'?'rtl':'ltr';
+  document.documentElement.dir=dir;
+  document.documentElement.lang=lang;
+  // Update all translatable elements
+  var updates={
+    'sub-title':'login_title',
+    's-emp-label':'stat_emp','s-pend-label':'stat_pend',
+    's-res-label':'stat_res','s-today-label':'stat_today'
+  };
+  Object.keys(updates).forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=t(updates[id]);});
+  // Nav cards
+  var navMap=['nav_emp','nav_leave','nav_lt','nav_dept','nav_sal','nav_adv','nav_rpt','nav_exp'];
+  document.querySelectorAll('.nav-card span').forEach(function(el,i){if(navMap[i])el.textContent=t(navMap[i]);});
+  // Error messages reset
+  var err=document.getElementById('l-err');if(err&&err.textContent)err.textContent='';
+  // Search placeholder
+  var sh=document.getElementById('emp-search');if(sh)sh.placeholder=lang==='ar'?'🔍 بحث بالاسم أو الرقم الوظيفي':lang==='hi'?'🔍 नाम से खोजें':'🔍 Search by name or number';
+}
+
+function api(path,opts){
+  var h={'Content-Type':'application/json','apikey':KEY};
+  var tok=getToken();if(tok)h['Authorization']='Bearer '+tok;
+  return fetch(SB+path,{...opts,headers:{...h,...((opts&&opts.headers)||{})}});
+}
+function show(id){document.querySelectorAll('.page,.login-wrap').forEach(p=>p.classList.remove('on'));document.getElementById(id).classList.add('on');applyTranslations();}
+
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-btn-item').forEach(function(b){
+    var txt=b.textContent.trim();
+    b.classList.toggle('active',(l==='ar'&&(txt==='AR'||txt.includes('AR')))||(l==='en'&&(txt==='EN'||txt.includes('EN')))||(l==='hi'&&(txt==='HI'||txt.includes('HI'))));
+  });
+  applyTranslations();
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+async function doLogin(){
+  var code=document.getElementById('l-code').value.trim().toLowerCase();
+  var emp=document.getElementById('l-emp').value.trim();
+  var pass=document.getElementById('l-pass').value;
+  var err=document.getElementById('l-err');
+  err.textContent='';
+  if(!code||!emp||!pass){err.textContent='جميع الحقول مطلوبة';return;}
+  var r=await api('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:'emp'+emp+'@'+code+'.dawamx.local',password:pass})});
+  var d=await r.json();
+  if(!r.ok){err.textContent=t('err_creds');return;}
+  setToken(d.access_token);setUserId(d.user.id);
+  sessionStorage.setItem('dawamx_adm_code',code);
+  await initUser(d.user.id);
+}
+
+async function initUser(uid){
+  var pr=await api('/rest/v1/profiles?id=eq.'+uid+'&select=*');
+  var pd=await pr.json();profile=pd&&pd[0];
+  if(!profile||!['company_admin','hr','super_admin'].includes(profile.role)){
+    var err=document.getElementById('l-err');if(err)err.textContent=t('err_notadmin');
+    setToken(null);setUserId(null);return;
+  }
+  companyId=profile.company_id;
+  var cr=await api('/rest/v1/companies?id=eq.'+companyId+'&select=name');
+  var cd=await cr.json();var co=cd&&cd[0];
+  document.getElementById('d-name').textContent=profile.full_name;
+  document.getElementById('d-company').textContent=(co&&co.name)||'';
+  show('p-dash');
+  applyTranslations();
+  loadDashboard();
+}
+
+// Auto-login
+(async function(){
+  var tok=getToken();var uid=getUserId();
+  if(!tok||!uid)return;
+  await initUser(uid);
+})();
+
+
+// ============================================================
+// EXCEL IMPORT
+// ============================================================
+var importData = [];
+
+async function previewImport(input){
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var data = new Uint8Array(e.target.result);
+    var wb = XLSX.read(data, {type:'array'});
+    var ws = wb.Sheets[wb.SheetNames[0]];
+    var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    // Skip header row if first cell looks like a header
+    var startRow = 0;
+    if(rows.length > 0 && typeof rows[0][0] === 'string' && isNaN(rows[0][0])){
+      startRow = 1;
+    }
+    importData = rows.slice(startRow).filter(function(r){return r[0]&&r[1];});
+    if(!importData.length){
+      document.getElementById('import-msg').textContent = 'لم يتم العثور على بيانات';
+      document.getElementById('import-msg').className = 'msg ko';
+      return;
+    }
+    // Build preview table
+    var cols = ['الاسم','الرقم الوظيفي','الهاتف','المسمى','تاريخ التعيين','الجنسية','الرقم المدني','الراتب','بدل سكن','بدل نقل','رقم الإقامة','انتهاء الإقامة','رقم الجواز','انتهاء الجواز'];
+    var tbl = '<table style="border-collapse:collapse;font-size:11px;min-width:600px;">';
+    tbl += '<thead><tr>'+cols.slice(0,6).map(function(c){return'<th style="background:#222E50;padding:6px 8px;white-space:nowrap;color:#8A92AC;">'+c+'</th>';}).join('')+'</tr></thead><tbody>';
+    importData.slice(0,10).forEach(function(r){
+      tbl += '<tr>'+[0,1,2,3,4,5].map(function(i){return'<td style="padding:6px 8px;border-bottom:1px solid #2A3658;">'+((r[i])||'-')+'</td>';}).join('')+'</tr>';
+    });
+    tbl += '</tbody></table>';
+    if(importData.length > 10) tbl += '<p style="font-size:12px;color:#8A92AC;padding:8px;">+ '+(importData.length-10)+' صف آخر...</p>';
+    document.getElementById('import-table-wrap').innerHTML = tbl;
+    document.getElementById('import-count').textContent = 'إجمالي: '+importData.length+' موظف';
+    document.getElementById('import-preview').style.display = 'block';
+    document.getElementById('import-msg').textContent = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function confirmImport(){
+  var msg = document.getElementById('import-msg');
+  msg.textContent = '';
+  var defPass = document.getElementById('import-default-pass').value.trim() || '123456';
+  if(!importData.length){msg.textContent='لا توجد بيانات';msg.className='msg ko';return;}
+  var btn = document.getElementById('import-btn-confirm');
+  btn.disabled = true;
+  var success=0, failed=0;
+  for(var i=0; i<importData.length; i++){
+    var r = importData[i];
+    var name = String(r[0]||'').trim();
+    var empNum = String(r[1]||'').trim();
+    if(!name||!empNum){failed++;continue;}
+    try{
+      var payload = {
+        company_id: companyId,
+        full_name: name,
+        employee_number: empNum,
+        phone: String(r[2]||'').trim()||null,
+        job_title: String(r[3]||'').trim()||null,
+        hire_date: r[4]?new Date(r[4]).toLocaleDateString('en-CA'):null,
+        nationality: String(r[5]||'').trim()||null,
+        civil_id_number: String(r[6]||'').trim()||null,
+        role: 'employee',
+        status: 'active'
+      };
+      var fr = await fetch(SB+'/functions/v1/create-employee',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
+        body: JSON.stringify(Object.assign({},payload,{password:defPass}))
+      });
+      var fd = await fr.json();
+      if(fr.ok && fd.user_id){
+        var empId = fd.user_id;
+        // Add salary if present
+        var basic = parseFloat(r[7])||0;
+        if(basic>0){
+          await api('/rest/v1/employee_compensation',{method:'POST',body:JSON.stringify({
+            company_id:companyId,employee_id:empId,
+            basic_salary:basic,
+            housing_allowance:parseFloat(r[8])||0,
+            transport_allowance:parseFloat(r[9])||0,
+            other_allowance:0
+          })});
+        }
+        // Residency
+        if(r[10]){await api('/rest/v1/employee_documents',{method:'POST',body:JSON.stringify({company_id:companyId,employee_id:empId,document_type:'residency',document_number:String(r[10]),expiry_date:r[11]?new Date(r[11]).toLocaleDateString('en-CA'):null})});}
+        // Passport
+        if(r[12]){await api('/rest/v1/employee_documents',{method:'POST',body:JSON.stringify({company_id:companyId,employee_id:empId,document_type:'passport',document_number:String(r[12]),expiry_date:r[13]?new Date(r[13]).toLocaleDateString('en-CA'):null})});}
+        success++;
+      } else {failed++;}
+    } catch(e){failed++;}
+    msg.textContent = 'جاري الاستيراد... '+success+' نجح, '+failed+' فشل ('+Math.round((i+1)/importData.length*100)+'%)';
+    msg.className = 'msg ok';
+  }
+  btn.disabled = false;
+  msg.textContent = '✓ تم الاستيراد: '+success+' موظف. فشل: '+failed;
+  msg.className = success>0?'msg ok':'msg ko';
+  if(success>0){employees=[];await loadEmployees();loadStats();}
+}
+
+function doLogout(){setToken(null);setUserId(null);profile=null;companyId=null;show('p-login');}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function loadDashboard(){
+  await Promise.all([loadStats(),loadAlerts(),loadAttChart()]);
+}
+
+async function loadStats(){
+  var r1=await api('/rest/v1/profiles?company_id=eq.'+companyId+'&select=id');
+  var r2=await api('/rest/v1/leave_requests?company_id=eq.'+companyId+'&status=eq.pending&select=id');
+  var today=new Date().toLocaleDateString('en-CA');
+  var r3=await api('/rest/v1/attendance_records?company_id=eq.'+companyId+'&record_date=eq.'+today+'&select=id');
+  // Residency expiring in 90 days
+  var future=new Date();future.setDate(future.getDate()+90);
+  var futureStr=future.toLocaleDateString('en-CA');
+  var r4=await api('/rest/v1/employee_documents?company_id=eq.'+companyId+'&document_type=eq.residency&expiry_date=lte.'+futureStr+'&expiry_date=gte.'+today+'&select=id');
+  var d1=await r1.json(),d2=await r2.json(),d3=await r3.json(),d4=await r4.json();
+  document.getElementById('s-emp').textContent=(d1&&d1.length)||0;
+  document.getElementById('s-pend').textContent=(d2&&d2.length)||0;
+  document.getElementById('s-today').textContent=(d3&&d3.length)||0;
+  var resExp=(d4&&d4.length)||0;
+  document.getElementById('s-res-exp').textContent=resExp;
+  if(resExp>0) document.getElementById('s-res-card').classList.add('warn');
+}
+
+async function loadAlerts(){
+  var alerts=[];
+  var today=new Date().toLocaleDateString('en-CA');
+  var warn90=new Date();warn90.setDate(warn90.getDate()+90);
+  var warn30=new Date();warn30.setDate(warn30.getDate()+30);
+  
+  // Residency expiring < 30 days
+  var r1=await api('/rest/v1/employee_documents?company_id=eq.'+companyId+'&document_type=eq.residency&expiry_date=lte.'+warn30.toLocaleDateString('en-CA')+'&expiry_date=gte.'+today+'&select=*,profiles!employee_id(full_name)');
+  var d1=await r1.json()||[];
+  d1.forEach(function(doc){
+    var days=Math.ceil((new Date(doc.expiry_date)-new Date())/(1000*60*60*24));
+    alerts.push({type:'red',icon:'🆔',title:(doc.profiles&&doc.profiles.full_name)||'',sub:'إقامة تنتهي خلال '+days+' يوم ('+doc.expiry_date+')'});
+  });
+  
+  // Passport expiring < 90 days
+  var r2=await api('/rest/v1/employee_documents?company_id=eq.'+companyId+'&document_type=eq.passport&expiry_date=lte.'+warn90.toLocaleDateString('en-CA')+'&expiry_date=gte.'+today+'&select=*,profiles!employee_id(full_name)');
+  var d2=await r2.json()||[];
+  d2.forEach(function(doc){
+    var days=Math.ceil((new Date(doc.expiry_date)-new Date())/(1000*60*60*24));
+    alerts.push({type:'amber',icon:'📘',title:(doc.profiles&&doc.profiles.full_name)||'',sub:'جواز سفر ينتهي خلال '+days+' يوم'});
+  });
+
+  var el=document.getElementById('alerts-section');
+  if(!alerts.length){el.innerHTML='';return;}
+  el.innerHTML='<p class="sec-title" style="margin-top:0">⚠️ تنبيهات مهمة</p>'+
+    alerts.slice(0,5).map(function(a){
+      return '<div class="alert-card '+a.type+'"><span class="alert-icon">'+a.icon+'</span><div><p class="alert-text">'+a.title+'</p><p class="alert-sub">'+a.sub+'</p></div></div>';
+    }).join('');
+}
+
+async function loadAttChart(){
+  var labels=[],data=[];
+  var empCount=0;
+  var r0=await api('/rest/v1/profiles?company_id=eq.'+companyId+'&select=id');
+  var d0=await r0.json()||[];
+  empCount=d0.length||1;
+  
+  for(var i=6;i>=0;i--){
+    var d=new Date();d.setDate(d.getDate()-i);
+    var ds=d.toLocaleDateString('en-CA');
+    var dLabel=d.toLocaleDateString('ar-KW',{weekday:'short',day:'numeric'});
+    labels.push(dLabel);
+    var r=await api('/rest/v1/attendance_records?company_id=eq.'+companyId+'&record_date=eq.'+ds+'&select=id');
+    var rd=await r.json()||[];
+    data.push(Math.round(((rd.length||0)/empCount)*100));
+  }
+  
+  var ctx=document.getElementById('att-chart').getContext('2d');
+  if(attChart)attChart.destroy();
+  attChart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:labels,
+      datasets:[{
+        label:'نسبة الحضور %',
+        data:data,
+        backgroundColor:'rgba(242,169,59,0.7)',
+        borderColor:'#F2A93B',
+        borderWidth:1,
+        borderRadius:6
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{min:0,max:100,ticks:{color:'#8A92AC',callback:function(v){return v+'%';}},grid:{color:'#2A3658'}},
+        x:{ticks:{color:'#8A92AC'},grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ============================================================
+// EMPLOYEES
+// ============================================================
+async function loadEmployees(){
+  var r=await api('/rest/v1/profiles?company_id=eq.'+companyId+'&select=*,departments(name)&order=full_name');
+  employees=await r.json()||[];
+  renderEmployees(employees);
+  // Populate report selects
+  var empHtml=employees.map(function(e){return'<option value="'+e.id+'">'+e.full_name+' ('+e.employee_number+')</option>';}).join('');
+  var s1=document.getElementById('rpt-emp-sel');if(s1)s1.innerHTML=empHtml;
+}
+
+function renderEmployees(list){
+  var el=document.getElementById('emp-list');
+  if(!list.length){el.innerHTML='<p class="empty">'+t('no_emp')+'</p>';return;}
+  el.innerHTML=list.map(function(e){
+    var st=e.status==='active'?t('st_act'):e.status==='resigned'?t('st_res_emp'):t('st_term');
+    var photo=e.photo_url?'<img src="'+e.photo_url+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;margin-left:10px;">':'';
+    return '<div class="list-row" onclick="openEmpForm(\''+e.id+'\')">'+
+      '<div style="display:flex;align-items:center;">'+photo+
+      '<div><p class="lr-name">'+e.full_name+'</p>'+
+      '<p class="lr-sub">'+(e.employee_number||'')+(e.departments?' · '+e.departments.name:'')+'</p></div></div>'+
+      '<span class="badge '+(e.status||'active')+'">'+st+'</span></div>';
+  }).join('');
+}
+
+function filterEmployees(q){
+  if(!q){renderEmployees(employees);return;}
+  var filtered=employees.filter(function(e){
+    return e.full_name.includes(q)||((e.employee_number||'').includes(q));
+  });
+  renderEmployees(filtered);
+}
+
+var editingId=null;
+async function openEmpForm(id){
+  editingId=id;photoDataUrl=null;
+  document.getElementById('ef-photo-preview').src='';
+  document.getElementById('ef-photo-preview').style.display='none';
+  document.getElementById('ef-photo-icon').style.display='block';
+  document.getElementById('ef-msg').textContent='';
+  document.getElementById('ef-pass-wrap').style.display=id?'none':'block';
+  document.getElementById('ef-title').textContent=id?'تعديل بيانات الموظف':'إضافة موظف';
+  var dr=await api('/rest/v1/departments?company_id=eq.'+companyId+'&select=id,name');
+  departments=await dr.json()||[];
+  document.getElementById('ef-dept').innerHTML='<option value="">—</option>'+departments.map(function(d){return'<option value="'+d.id+'">'+d.name+'</option>';}).join('');
+  ['ef-name','ef-number','ef-phone','ef-title2','ef-nat','ef-civil','ef-basic','ef-housing','ef-transport','ef-other','ef-res-num','ef-res-issue','ef-res-exp','ef-pass-num','ef-pass-issue','ef-pass-exp','ef-pass','ef-hire','ef-contract-end'].forEach(function(x){var el=document.getElementById(x);if(el)el.value='';});
+  if(id){
+    var er=await api('/rest/v1/profiles?id=eq.'+id+'&select=*');
+    var ed=await er.json();var emp=ed&&ed[0];
+    if(emp){
+      document.getElementById('ef-name').value=emp.full_name||'';
+      document.getElementById('ef-number').value=emp.employee_number||'';
+      document.getElementById('ef-phone').value=emp.phone||'';
+      document.getElementById('ef-dept').value=emp.department_id||'';
+      document.getElementById('ef-title2').value=emp.job_title||'';
+      document.getElementById('ef-hire').value=emp.hire_date||'';
+      document.getElementById('ef-contract-end').value=emp.contract_end_date||'';
+      document.getElementById('ef-nat').value=emp.nationality||'';
+      document.getElementById('ef-civil').value=emp.civil_id_number||'';
+      document.getElementById('ef-contract').value=emp.contract_type||'permanent';
+      document.getElementById('ef-status').value=emp.status||'active';
+      if(emp.photo_url){document.getElementById('ef-photo-preview').src=emp.photo_url;document.getElementById('ef-photo-preview').style.display='block';document.getElementById('ef-photo-icon').style.display='none';}
+    }
+    var cr=await api('/rest/v1/employee_compensation?employee_id=eq.'+id+'&order=effective_date.desc&limit=1');
+    var cd=await cr.json();
+    if(cd&&cd[0]){document.getElementById('ef-basic').value=cd[0].basic_salary||'';document.getElementById('ef-housing').value=cd[0].housing_allowance||'';document.getElementById('ef-transport').value=cd[0].transport_allowance||'';document.getElementById('ef-other').value=cd[0].other_allowance||'';}
+    var docr=await api('/rest/v1/employee_documents?employee_id=eq.'+id);
+    var docs=await docr.json()||[];
+    var res=docs.find(function(d){return d.document_type==='residency';});
+    var pas=docs.find(function(d){return d.document_type==='passport';});
+    if(res){document.getElementById('ef-res-num').value=res.document_number||'';document.getElementById('ef-res-issue').value=res.issue_date||'';document.getElementById('ef-res-exp').value=res.expiry_date||'';}
+    if(pas){document.getElementById('ef-pass-num').value=pas.document_number||'';document.getElementById('ef-pass-issue').value=pas.issue_date||'';document.getElementById('ef-pass-exp').value=pas.expiry_date||'';}
+  }
+  show('p-emp-form');
+}
+
+function previewPhoto(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    photoDataUrl=e.target.result;
+    var img=document.getElementById('ef-photo-preview');
+    var icon=document.getElementById('ef-photo-icon');
+    img.src=photoDataUrl;img.style.display='block';icon.style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveEmployee(){
+  var msg=document.getElementById('ef-msg');msg.textContent='';
+  var name=document.getElementById('ef-name').value.trim();
+  var num=document.getElementById('ef-number').value.trim();
+  if(!name||!num){msg.textContent='الاسم والرقم الوظيفي مطلوبين';msg.className='msg ko';return;}
+  var payload={company_id:companyId,full_name:name,employee_number:num,
+    phone:document.getElementById('ef-phone').value.trim()||null,
+    department_id:document.getElementById('ef-dept').value||null,
+    job_title:document.getElementById('ef-title2').value.trim()||null,
+    hire_date:document.getElementById('ef-hire').value||null,
+    contract_end_date:document.getElementById('ef-contract-end').value||null,
+    nationality:document.getElementById('ef-nat').value.trim()||null,
+    civil_id_number:document.getElementById('ef-civil').value.trim()||null,
+    contract_type:document.getElementById('ef-contract').value,
+    status:document.getElementById('ef-status').value};
+  if(photoDataUrl)payload.photo_url=photoDataUrl;
+  var empId=editingId;
+  if(!empId){
+    var pass=document.getElementById('ef-pass').value.trim();
+    if(!pass){msg.textContent='لازم تحط كلمة مرور';msg.className='msg ko';return;}
+    payload.role='employee';
+    var fr=await fetch(SB+'/functions/v1/create-employee',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},body:JSON.stringify(Object.assign({},payload,{password:pass}))});
+    var fd=await fr.json();
+    if(!fr.ok||fd.error){msg.textContent='خطأ: '+(fd.error||'غير معروف');msg.className='msg ko';return;}
+    empId=fd.user_id;
+  } else {
+    var r=await api('/rest/v1/profiles?id=eq.'+empId,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(payload)});
+    if(!r.ok){msg.textContent='حصل خطأ في الحفظ';msg.className='msg ko';return;}
+  }
+  var basic=parseFloat(document.getElementById('ef-basic').value)||0;
+  if(basic>0){await api('/rest/v1/employee_compensation',{method:'POST',body:JSON.stringify({company_id:companyId,employee_id:empId,basic_salary:basic,housing_allowance:parseFloat(document.getElementById('ef-housing').value)||0,transport_allowance:parseFloat(document.getElementById('ef-transport').value)||0,other_allowance:parseFloat(document.getElementById('ef-other').value)||0})});}
+  await upsertDoc(empId,'residency',document.getElementById('ef-res-num').value.trim(),document.getElementById('ef-res-issue').value,document.getElementById('ef-res-exp').value);
+  await upsertDoc(empId,'passport',document.getElementById('ef-pass-num').value.trim(),document.getElementById('ef-pass-issue').value,document.getElementById('ef-pass-exp').value);
+  msg.textContent='تم الحفظ بنجاح ✓';msg.className='msg ok';
+  employees=[];await loadEmployees();
+  setTimeout(function(){show('p-employees');},700);
+}
+
+async function upsertDoc(empId,type,num,issue,expiry){
+  if(!num)return;
+  var r=await api('/rest/v1/employee_documents?employee_id=eq.'+empId+'&document_type=eq.'+type+'&select=id');
+  var d=await r.json();
+  var body=JSON.stringify({document_number:num,issue_date:issue||null,expiry_date:expiry||null});
+  if(d&&d[0])await api('/rest/v1/employee_documents?id=eq.'+d[0].id,{method:'PATCH',body:body});
+  else await api('/rest/v1/employee_documents',{method:'POST',body:JSON.stringify({company_id:companyId,employee_id:empId,document_type:type,document_number:num,issue_date:issue||null,expiry_date:expiry||null})});
+}
+
+// ============================================================
+// APPROVALS
+// ============================================================
+async function loadApprovals(){
+  var r=await api('/rest/v1/leave_requests?company_id=eq.'+companyId+'&status=eq.pending&select=*,profiles!employee_id(full_name),leave_types(name)&order=created_at');
+  var d=await r.json()||[];
+  var el=document.getElementById('approvals-list');
+  if(!d.length){el.innerHTML='<p class="empty">'+t('no_req')+'</p>';return;}
+  el.innerHTML=d.map(function(x){
+    return '<div class="approval-card">'+
+      '<p class="approval-name">'+(x.profiles&&x.profiles.full_name||'')+'</p>'+
+      '<p class="approval-sub">'+(x.leave_types&&x.leave_types.name||'')+' · '+x.start_date+' → '+x.end_date+' ('+x.days_count+' يوم)</p>'+
+      (x.reason?'<p class="approval-sub">'+x.reason+'</p>':'')+
+      '<div class="btn-row">'+
+        '<button class="btn btn-success btn-sm" onclick="handleApproval(\''+x.id+'\',\''+x.employee_id+'\',\''+x.leave_type_id+'\','+x.days_count+',\''+x.start_date+'\',\'approve\')">موافقة</button>'+
+        '<button class="btn btn-danger btn-sm" onclick="handleApproval(\''+x.id+'\',\''+x.employee_id+'\',\''+x.leave_type_id+'\','+x.days_count+',\''+x.start_date+'\',\'reject\')">رفض</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+async function handleApproval(reqId,empId,typeId,days,startDate,action){
+  var status=action==='approve'?'approved':'rejected';
+  await api('/rest/v1/leave_requests?id=eq.'+reqId,{method:'PATCH',body:JSON.stringify({status:status,approved_by:getUserId(),approved_at:new Date().toISOString()})});
+  if(action==='approve'){
+    var yr=new Date(startDate).getFullYear();
+    var br=await api('/rest/v1/leave_balances?employee_id=eq.'+empId+'&leave_type_id=eq.'+typeId+'&year=eq.'+yr+'&select=*');
+    var bd=await br.json();
+    if(bd&&bd[0])await api('/rest/v1/leave_balances?id=eq.'+bd[0].id,{method:'PATCH',body:JSON.stringify({used_days:(bd[0].used_days||0)+days})});
+    else{var lr=await api('/rest/v1/leave_types?id=eq.'+typeId+'&select=days_per_year');var ld=await lr.json();await api('/rest/v1/leave_balances',{method:'POST',body:JSON.stringify({employee_id:empId,leave_type_id:typeId,year:yr,total_days:(ld&&ld[0]&&ld[0].days_per_year)||0,used_days:days})});}
+  }
+  await loadApprovals();loadStats();
+}
+
+// ============================================================
+// LEAVE TYPES & DEPARTMENTS
+// ============================================================
+async function loadLeaveTypes(){
+  var r=await api('/rest/v1/leave_types?company_id=eq.'+companyId+'&select=*&order=name');
+  var d=await r.json()||[];
+  document.getElementById('lt-list').innerHTML=d.map(function(lt){return'<div class="list-row"><p class="lr-name">'+lt.name+'</p><p class="lr-sub">'+lt.days_per_year+' يوم · '+(lt.is_paid?'مدفوعة':'غير مدفوعة')+'</p></div>';}).join('');
+}
+async function addLeaveType(){
+  var name=document.getElementById('lt-name').value.trim();var days=parseInt(document.getElementById('lt-days').value)||0;
+  if(!name)return;
+  await api('/rest/v1/leave_types',{method:'POST',body:JSON.stringify({company_id:companyId,name:name,days_per_year:days,is_paid:document.getElementById('lt-paid').checked,requires_approval:true})});
+  document.getElementById('lt-name').value='';document.getElementById('lt-days').value='';loadLeaveTypes();
+}
+async function loadDepartments(){
+  var r=await api('/rest/v1/departments?company_id=eq.'+companyId+'&select=*&order=name');
+  var d=await r.json()||[];
+  document.getElementById('dept-list').innerHTML=d.map(function(x){return'<div class="list-row"><p class="lr-name">'+x.name+'</p></div>';}).join('');
+}
+async function addDept(){
+  var name=document.getElementById('dept-name').value.trim();if(!name)return;
+  await api('/rest/v1/departments',{method:'POST',body:JSON.stringify({company_id:companyId,name:name})});
+  document.getElementById('dept-name').value='';loadDepartments();
+}
+
+// ============================================================
+// SALARY
+// ============================================================
+async function openSalaryAdmin(){
+  var r=await api('/rest/v1/profiles?company_id=eq.'+companyId+'&status=eq.active&select=id,full_name,employee_number&order=full_name');
+  var d=await r.json()||[];
+  document.getElementById('sal-emp-sel').innerHTML=d.map(function(e){return'<option value="'+e.id+'">'+e.full_name+' ('+e.employee_number+')</option>';}).join('');
+  var now=new Date();document.getElementById('sal-month').value=now.getMonth()+1;document.getElementById('sal-year').value=now.getFullYear();
+  document.getElementById('sal-net-preview').style.display='none';document.getElementById('sal-auto-data').style.display='none';document.getElementById('sal-msg').textContent='';
+}
+
+async function loadSalaryData(){
+  var empId=document.getElementById('sal-emp-sel').value;
+  var month=parseInt(document.getElementById('sal-month').value);
+  var year=parseInt(document.getElementById('sal-year').value);
+  if(!empId)return;
+  var cr=await api('/rest/v1/employee_compensation?employee_id=eq.'+empId+'&order=effective_date.desc&limit=1');
+  var cd=await cr.json();var sal=cd&&cd[0];
+  if(sal){document.getElementById('sal-basic').value=sal.basic_salary||0;document.getElementById('sal-housing').value=sal.housing_allowance||0;document.getElementById('sal-transport').value=sal.transport_allowance||0;document.getElementById('sal-other').value=sal.other_allowance||0;}
+  var firstDay=year+'-'+String(month).padStart(2,'0')+'-01';
+  var lastDay=new Date(year,month,0).toLocaleDateString('en-CA');
+  var ar=await api('/rest/v1/attendance_records?employee_id=eq.'+empId+'&record_date=gte.'+firstDay+'&record_date=lte.'+lastDay+'&select=*&order=record_date');
+  var att=await ar.json()||[];
+  var coR=await api('/rest/v1/companies?id=eq.'+companyId+'&select=work_hours,break_hours');
+  var coD=await coR.json();var co=coD&&coD[0];
+  var totalWorkHrs=(co&&co.work_hours||8)+(co&&co.break_hours||0);
+  var normalOT=0,friOT=0;
+  att.forEach(function(rec){
+    if(!rec.check_in_time||!rec.check_out_time)return;
+    var inT=new Date(rec.check_in_time);var outT=new Date(rec.check_out_time);
+    var totalMins=(outT-inT)/60000-(co&&co.break_hours||0)*60;
+    var otMins=Math.max(0,totalMins-totalWorkHrs*60);
+    if(otMins<30)return;
+    if(inT.getDay()===5)friOT+=otMins/60;else normalOT+=otMins/60;
+  });
+  document.getElementById('sal-ot-normal').value=normalOT.toFixed(2);
+  document.getElementById('sal-ot-fri').value=friOT.toFixed(2);
+  var autoEl=document.getElementById('sal-auto-content');
+  autoEl.innerHTML='<div style="background:#222E50;border-radius:10px;padding:12px;">'+
+    '<div class="info-row"><span class="lbl">أيام الحضور</span><span class="val">'+att.filter(function(r){return r.check_in_time;}).length+'</span></div>'+
+    '<div class="info-row"><span class="lbl">أوفر عادي محسوب</span><span class="val" style="color:#5FBF8A;">'+normalOT.toFixed(2)+' ساعة</span></div>'+
+    '<div class="info-row"><span class="lbl">أوفر جمعة محسوب</span><span class="val" style="color:#5FBF8A;">'+friOT.toFixed(2)+' ساعة</span></div>'+
+    '</div>';
+  document.getElementById('sal-auto-data').style.display='block';
+  var advR=await api('/rest/v1/employee_advances?employee_id=eq.'+empId+'&status=eq.approved&select=monthly_deduction,remaining_balance');
+  var advD=await advR.json()||[];
+  var totalAdvDeduct=0;advD.forEach(function(a){if(a.remaining_balance>0)totalAdvDeduct+=parseFloat(a.monthly_deduction||0);});
+  if(totalAdvDeduct>0)document.getElementById('sal-adv-deduct').value=totalAdvDeduct.toFixed(3);
+}
+
+function calcAndPreview(){
+  var basic=parseFloat(document.getElementById('sal-basic').value)||0;
+  var housing=parseFloat(document.getElementById('sal-housing').value)||0;
+  var transport=parseFloat(document.getElementById('sal-transport').value)||0;
+  var other=parseFloat(document.getElementById('sal-other').value)||0;
+  var otN=parseFloat(document.getElementById('sal-ot-normal').value)||0;
+  var otF=parseFloat(document.getElementById('sal-ot-fri').value)||0;
+  var otH=parseFloat(document.getElementById('sal-ot-hol').value)||0;
+  var deduct=parseFloat(document.getElementById('sal-deduct').value)||0;
+  var advDeduct=parseFloat(document.getElementById('sal-adv-deduct').value)||0;
+  var totalBase=basic+housing+transport+other;
+  var hourlyRate=totalBase/26/8;
+  var otAmount=(otN*hourlyRate*1.25)+(otF*hourlyRate*1.5)+(otH*hourlyRate*2);
+  var net=totalBase+otAmount-deduct-advDeduct;
+  document.getElementById('sal-net-val').textContent=net.toFixed(3)+' د.ك';
+  document.getElementById('sal-net-preview').style.display='block';
+  return{basic,housing,transport,other,otN,otF,otH,otAmount:parseFloat(otAmount.toFixed(3)),deduct,advDeduct,net:parseFloat(net.toFixed(3))};
+}
+
+async function issueSalarySlip(){
+  var msg=document.getElementById('sal-msg');msg.textContent='';
+  var empId=document.getElementById('sal-emp-sel').value;
+  var month=parseInt(document.getElementById('sal-month').value);
+  var year=parseInt(document.getElementById('sal-year').value);
+  if(!empId){msg.textContent='اختر الموظف';msg.className='msg ko';return;}
+  var vals=calcAndPreview();
+  var body={company_id:companyId,employee_id:empId,month,year,basic_salary:vals.basic,housing_allowance:vals.housing,transport_allowance:vals.transport,other_allowance:vals.other,overtime_normal_hours:vals.otN,overtime_friday_hours:vals.otF,overtime_holiday_hours:vals.otH,overtime_amount:vals.otAmount,deductions:vals.deduct,advance_deduction:vals.advDeduct,net_salary:vals.net,notes:document.getElementById('sal-notes').value,issued_by:getUserId(),issued_at:new Date().toISOString()};
+  var r=await api('/rest/v1/salary_slips',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(body)});
+  if(r.ok){
+    msg.textContent='تم اصدار كشف الراتب ✓';msg.className='msg ok';
+    if(vals.advDeduct>0){
+      var advR=await api('/rest/v1/employee_advances?employee_id=eq.'+empId+'&status=eq.approved&remaining_balance=gt.0&select=id,remaining_balance,monthly_deduction');
+      var advD=await advR.json()||[];
+      for(var i=0;i<advD.length;i++){var a=advD[i];var newBal=Math.max(0,parseFloat(a.remaining_balance)-parseFloat(a.monthly_deduction||0));await api('/rest/v1/employee_advances?id=eq.'+a.id,{method:'PATCH',body:JSON.stringify({remaining_balance:newBal,status:newBal<=0?'settled':'approved'})});}
+    }
+  }else{msg.textContent='حصل خطأ';msg.className='msg ko';}
+}
+
+// ============================================================
+// ADVANCES
+// ============================================================
+async function loadAdvancesAdmin(){
+  var r=await api('/rest/v1/employee_advances?company_id=eq.'+companyId+'&select=*,profiles!employee_id(full_name)&order=created_at.desc');
+  var d=await r.json()||[];
+  var el=document.getElementById('adv-admin-list');
+  var map={pending:'قيد المراجعة',approved:'موافق',rejected:'مرفوض',settled:'مسدد'};
+  if(!d.length){el.innerHTML='<p class="empty">'+t('no_adv')+'</p>';return;}
+  el.innerHTML=d.map(function(a){
+    var name=(a.profiles&&a.profiles.full_name)||'';
+    var sb='';
+    if(a.status==='pending'){
+      sb='<div class="btn-row"><button class="btn btn-success btn-sm" onclick="handleAdv(\''+a.id+'\',\'approved\')">موافقة</button><button class="btn btn-danger btn-sm" onclick="handleAdv(\''+a.id+'\',\'rejected\')">رفض</button></div>';
+    }else{
+      var bc=a.status==='approved'?'approved':a.status==='settled'?'active':'rejected';
+      sb='<span class="badge '+bc+'">'+(map[a.status]||a.status)+'</span>';
+    }
+    return '<div class="approval-card"><p class="approval-name">'+name+'</p><p class="approval-sub">'+parseFloat(a.amount).toFixed(3)+' د.ك | قسط: '+parseFloat(a.monthly_deduction||0).toFixed(3)+' | متبقي: '+parseFloat(a.remaining_balance||a.amount).toFixed(3)+'</p>'+(a.reason?'<p class="approval-sub">'+a.reason+'</p>':'')+sb+'</div>';
+  }).join('');
+}
+async function handleAdv(id,status){
+  await api('/rest/v1/employee_advances?id=eq.'+id,{method:'PATCH',body:JSON.stringify({status:status,approved_by:getUserId()})});
+  loadAdvancesAdmin();loadStats();
+}
+
+// ============================================================
+// ATTENDANCE REPORT
+// ============================================================
+async function loadAttendanceReport(){
+  var r=await api('/rest/v1/profiles?company_id=eq.'+companyId+'&status=eq.active&select=id,full_name,employee_number&order=full_name');
+  var d=await r.json()||[];
+  var sel=document.getElementById('rpt-emp-sel');
+  sel.innerHTML=d.map(function(e){return'<option value="'+e.id+'">'+e.full_name+' ('+e.employee_number+')</option>';}).join('');
+  var now=new Date();
+  document.getElementById('rpt-month').value=now.getMonth()+1;
+  document.getElementById('rpt-year').value=now.getFullYear();
+}
+
+async function generateReport(){
+  var empId=document.getElementById('rpt-emp-sel').value;
+  var month=parseInt(document.getElementById('rpt-month').value);
+  var year=parseInt(document.getElementById('rpt-year').value);
+  if(!empId)return;
+  var firstDay=year+'-'+String(month).padStart(2,'0')+'-01';
+  var lastDay=new Date(year,month,0).toLocaleDateString('en-CA');
+  var r=await api('/rest/v1/attendance_records?employee_id=eq.'+empId+'&record_date=gte.'+firstDay+'&record_date=lte.'+lastDay+'&select=*&order=record_date');
+  var att=await r.json()||[];
+  var coR=await api('/rest/v1/companies?id=eq.'+companyId+'&select=work_hours,break_hours');
+  var coD=await coR.json();var co=coD&&coD[0];
+  var totalWorkHrs=(co&&co.work_hours||8)+(co&&co.break_hours||0);
+  var totalOT=0,totalHrs=0,days=att.length;
+  var rows=att.map(function(rec){
+    var inT=rec.check_in_time?new Date(rec.check_in_time):null;
+    var outT=rec.check_out_time?new Date(rec.check_out_time):null;
+    var dur='-',ot='-';
+    if(inT&&outT){
+      var mins=(outT-inT)/60000-(co&&co.break_hours||0)*60;
+      var hrs=mins/60;totalHrs+=hrs;
+      dur=hrs.toFixed(1)+'س';
+      var otMins=Math.max(0,mins-totalWorkHrs*60);
+      if(otMins>=30){var otHrs=otMins/60;totalOT+=otHrs;ot=otHrs.toFixed(2)+'س';}
+    }
+    return '<tr>'+
+      '<td>'+rec.record_date+'</td>'+
+      '<td class="att-present">'+(inT?inT.toLocaleTimeString('ar-KW',{hour:'2-digit',minute:'2-digit'}):'-')+'</td>'+
+      '<td class="att-present">'+(outT?outT.toLocaleTimeString('ar-KW',{hour:'2-digit',minute:'2-digit'}):'-')+'</td>'+
+      '<td>'+dur+'</td>'+
+      '<td class="att-present">'+ot+'</td>'+
+      '</tr>';
+  }).join('');
+  
+  var el=document.getElementById('rpt-content');
+  el.innerHTML='<div style="background:#1B2542;border-radius:12px;padding:14px;margin-bottom:14px;">'+
+    '<div class="info-row"><span class="lbl">إجمالي أيام الحضور</span><span class="val">'+days+'</span></div>'+
+    '<div class="info-row"><span class="lbl">إجمالي ساعات العمل</span><span class="val">'+totalHrs.toFixed(1)+' ساعة</span></div>'+
+    '<div class="info-row"><span class="lbl">إجمالي الأوفر تايم</span><span class="val" style="color:#5FBF8A;">'+totalOT.toFixed(2)+' ساعة</span></div>'+
+    '</div>'+
+    '<div style="overflow-x:auto;background:#1B2542;border-radius:12px;padding:8px;">'+
+    '<table class="att-table">'+
+    '<thead><tr><th>التاريخ</th><th>دخول</th><th>خروج</th><th>المدة</th><th>أوفر</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody>'+
+    '</table></div>';
+}
+
+// ============================================================
+// EXPIRY REPORT
+// ============================================================
+async function loadExpiryReport(){
+  var today=new Date().toLocaleDateString('en-CA');
+  var warn90=new Date();warn90.setDate(warn90.getDate()+90);
+  var r=await api('/rest/v1/employee_documents?company_id=eq.'+companyId+'&expiry_date=lte.'+warn90.toLocaleDateString('en-CA')+'&expiry_date=gte.'+today+'&select=*,profiles!employee_id(full_name,employee_number)&order=expiry_date');
+  var d=await r.json()||[];
+  var el=document.getElementById('expiry-list');
+  if(!d.length){el.innerHTML='<p class="empty">'+t('no_exp')+'</p>';return;}
+  el.innerHTML=d.map(function(doc){
+    var days=Math.ceil((new Date(doc.expiry_date)-new Date())/(1000*60*60*24));
+    var cls=days<30?'red':'amber';
+    var type=doc.document_type==='residency'?'إقامة':'جواز سفر';
+    var name=(doc.profiles&&doc.profiles.full_name)||'';
+    var empNum=(doc.profiles&&doc.profiles.employee_number)||'';
+    return '<div class="alert-card '+cls+'">'+
+      '<span class="alert-icon">'+(doc.document_type==='residency'?'🆔':'📘')+'</span>'+
+      '<div><p class="alert-text">'+name+' ('+empNum+')</p>'+
+      '<p class="alert-sub">'+type+' · ينتهي '+doc.expiry_date+' ('+days+' يوم)</p>'+
+      (doc.document_number?'<p class="alert-sub">رقم: '+doc.document_number+'</p>':'')+
+      '</div></div>';
+  }).join('');
+}
+</script>
+
+<!-- EXCEL IMPORT -->
+<div id="p-import" class="page">
+  <div class="topbar">
+    <button class="icon-btn" onclick="show('p-employees')">&#x2192;</button>
+    <h2 id="tt-import">استيراد موظفين من إكسل</h2>
+    <span style="width:38px"></span>
+  </div>
+  <div style="background:#1B2542;border-radius:14px;padding:16px;margin-bottom:16px;">
+    <p style="font-size:13px;color:#8A92AC;margin-bottom:12px;" id="import-hint">الملف لازم يكون إكسل (.xlsx) بالأعمدة التالية بالترتيب:</p>
+    <p style="font-size:12px;color:#F2A93B;">الاسم | الرقم الوظيفي | رقم الهاتف | المسمى الوظيفي | تاريخ التعيين | الجنسية | الرقم المدني | الراتب الأساسي | بدل سكن | بدل نقل | رقم الإقامة | انتهاء الإقامة | رقم الجواز | انتهاء الجواز</p>
+  </div>
+  <input type="file" id="import-file" accept=".xlsx,.xls" style="display:none" onchange="previewImport(this)">
+  <button class="btn btn-outline" onclick="document.getElementById('import-file').click()" id="import-btn-choose">اختر ملف إكسل</button>
+  <div id="import-preview" style="margin-top:16px;display:none;">
+    <p class="sec-title" id="import-preview-title">معاينة البيانات</p>
+    <div id="import-table-wrap" style="overflow-x:auto;background:#1B2542;border-radius:12px;padding:8px;margin-bottom:14px;"></div>
+    <p style="font-size:13px;color:#8A92AC;" id="import-count"></p>
+    <div class="field" style="margin-top:12px;">
+      <label id="import-pass-lbl">كلمة مرور مبدئية لجميع الموظفين</label>
+      <input type="text" id="import-default-pass" value="123456" placeholder="123456">
+    </div>
+    <button class="btn btn-amber" onclick="confirmImport()" id="import-btn-confirm">استيراد الكل</button>
+  </div>
+  <p class="msg" id="import-msg"></p>
+</div>
+
+</body>
+</html>
