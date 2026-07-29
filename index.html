@@ -406,7 +406,7 @@ function applyTranslations(){
   Object.keys(optMap).forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=t(optMap[id]);});
   // Translate nav cards
   var navSpans=document.querySelectorAll('.nav-card span');
-  var navKeys=['nav_emp','nav_leave','nav_lt','nav_dept','nav_sal','nav_adv','nav_rpt','nav_exp'];
+  var navKeys=['nav_emp','nav_leave','nav_lt','nav_dept','nav_sal','nav_adv','nav_rpt','nav_exp','nav_import'];
   navSpans.forEach(function(el,i){if(navKeys[i])el.textContent=t(navKeys[i]);});
   var sh=document.getElementById('emp-search');
   if(sh)sh.placeholder=lang==='ar'?'🔍 بحث بالاسم أو الرقم الوظيفي':lang==='hi'?'🔍 नाम से खोजें':'🔍 Search by name or number';
@@ -661,7 +661,7 @@ async function loadAttChart(){
   for(var i=6;i>=0;i--){
     var d=new Date();d.setDate(d.getDate()-i);
     var ds=d.toLocaleDateString('en-CA');
-    var dLabel=d.toLocaleDateString('ar-KW',{weekday:'short',day:'numeric'});
+    var locale=lang==='en'?'en-US':lang==='hi'?'hi-IN':'ar-KW'; var dLabel=d.toLocaleDateString(locale,{weekday:'short',day:'numeric'});
     labels.push(dLabel);
     var r=await api('/rest/v1/attendance_records?company_id=eq.'+companyId+'&record_date=eq.'+ds+'&select=id');
     var rd=await r.json()||[];
@@ -844,8 +844,8 @@ async function loadApprovals(){
       '<p class="approval-sub">'+(x.leave_types&&x.leave_types.name||'')+' · '+x.start_date+' → '+x.end_date+' ('+x.days_count+' يوم)</p>'+
       (x.reason?'<p class="approval-sub">'+x.reason+'</p>':'')+
       '<div class="btn-row">'+
-        '<button class="btn btn-success btn-sm" onclick="handleApproval(\''+x.id+'\',\''+x.employee_id+'\',\''+x.leave_type_id+'\','+x.days_count+',\''+x.start_date+'\',\'approve\')">موافقة</button>'+
-        '<button class="btn btn-danger btn-sm" onclick="handleApproval(\''+x.id+'\',\''+x.employee_id+'\',\''+x.leave_type_id+'\','+x.days_count+',\''+x.start_date+'\',\'reject\')">رفض</button>'+
+        '<button class="btn btn-success btn-sm" onclick="handleApproval(\''+x.id+'\',\''+x.employee_id+'\',\''+x.leave_type_id+'\','+x.days_count+',\''+x.start_date+'\',\'approve\')">'+t('approve')+'</button>'+
+        '<button class="btn btn-danger btn-sm" onclick="handleApproval(\''+x.id+'\',\''+x.employee_id+'\',\''+x.leave_type_id+'\','+x.days_count+',\''+x.start_date+'\',\'reject\')">'+t('reject')+'</button>'+
       '</div></div>';
   }).join('');
 }
@@ -880,8 +880,24 @@ async function addLeaveType(){
 async function loadDepartments(){
   var r=await api('/rest/v1/departments?company_id=eq.'+companyId+'&select=*&order=name');
   var d=await r.json()||[];
-  document.getElementById('dept-list').innerHTML=d.map(function(x){return'<div class="list-row"><p class="lr-name">'+x.name+'</p></div>';}).join('');
+  var deptHtml = '';
+  d.forEach(function(x){
+    deptHtml += '<div class="list-row"><p class="lr-name">'+x.name+'</p><button class="btn btn-danger btn-sm" style="width:auto;padding:6px 12px;" data-id="'+x.id+'">'+t('delete_btn')+'</button></div>';
+  });
+  var el = document.getElementById('dept-list');
+  el.innerHTML = deptHtml;
+  el.querySelectorAll('button[data-id]').forEach(function(btn){
+    btn.addEventListener('click', function(){ deleteDept(this.dataset.id); });
+  });
 }
+
+async function deleteDept(id){
+  var msg = lang==='en'?'Delete this department?':lang==='hi'?'इस विभाग को हटाएं?':'هل تريد حذف هذا القسم؟';
+  if(!confirm(msg)) return;
+  await api('/rest/v1/departments?id=eq.'+id, {method:'DELETE'});
+  loadDepartments();
+}
+
 async function addDept(){
   var name=document.getElementById('dept-name').value.trim();if(!name)return;
   await api('/rest/v1/departments',{method:'POST',body:JSON.stringify({company_id:companyId,name:name})});
