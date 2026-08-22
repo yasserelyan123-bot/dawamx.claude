@@ -931,11 +931,25 @@ async function saveEmployee(){
     if(!pass){msg.textContent=t('ef_lbl_pass');msg.className='msg ko';return;}
     payload.role='employee';
     msg.textContent='جاري إضافة الموظف...';msg.className='msg ok';
-    var fr=await fetch(SB+'/functions/v1/create-employee',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},body:JSON.stringify(Object.assign({},payload,{password:pass}))});
-    var frText=await fr.text();
-    var fd={}; try{fd=JSON.parse(frText);}catch(e){msg.textContent='خطأ في الاتصال: '+frText.slice(0,100);msg.className='msg ko';return;}
-    if(!fr.ok||fd.error){msg.textContent='خطأ ('+fr.status+'): '+(fd.error||fd.message||frText.slice(0,150));msg.className='msg ko';return;}
-    if(!fd.user_id){msg.textContent='خطأ: لم يتم إنشاء الحساب - '+JSON.stringify(fd).slice(0,100);msg.className='msg ko';return;}
+    var code=sessionStorage.getItem('dx_code')||'ahlia';
+    var email='emp'+payload.employee_number+'@'+code+'.dawamx.local';
+    // Use SQL function to create employee
+    var fr=await api('/rest/v1/rpc/create_employee_account',{
+      method:'POST',
+      body:JSON.stringify({
+        p_email:email,
+        p_password:pass,
+        p_company_id:companyId,
+        p_full_name:payload.full_name,
+        p_employee_number:payload.employee_number
+      })
+    });
+    var empId=await fr.text();
+    empId=empId.replace(/['"]/g,'').trim();
+    if(!fr.ok||!empId||empId.length<10){
+      msg.textContent='خطأ في إنشاء الحساب ('+fr.status+'): '+empId.slice(0,100);
+      msg.className='msg ko';return;
+    }
     empId=fd.user_id;
   } else {
     var r=await api('/rest/v1/profiles?id=eq.'+empId,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(payload)});
