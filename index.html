@@ -933,23 +933,20 @@ async function saveEmployee(){
     msg.textContent='جاري إضافة الموظف...';msg.className='msg ok';
     var code=sessionStorage.getItem('dx_code')||'ahlia';
     var email='emp'+payload.employee_number+'@'+code+'.dawamx.local';
-    // Use SQL function to create employee
-    var fr=await api('/rest/v1/rpc/create_employee_account',{
+    // Step 1: Create auth account via signup
+    var signupRes=await fetch(SB+'/auth/v1/signup',{
       method:'POST',
-      body:JSON.stringify({
-        p_email:email,
-        p_password:pass,
-        p_company_id:companyId,
-        p_full_name:payload.full_name,
-        p_employee_number:payload.employee_number
-      })
+      headers:{'Content-Type':'application/json','apikey':KEY},
+      body:JSON.stringify({email:email,password:pass})
     });
-    var empId=await fr.text();
-    empId=empId.replace(/['"]/g,'').trim();
-    if(!fr.ok||!empId||empId.length<10){
-      msg.textContent='خطأ في إنشاء الحساب ('+fr.status+'): '+empId.slice(0,100);
+    var signupData=await signupRes.json();
+    var empId=signupData.id||(signupData.user&&signupData.user.id);
+    if(!empId){
+      msg.textContent='خطأ: '+(signupData.error_description||signupData.message||signupData.msg||'فشل إنشاء الحساب');
       msg.className='msg ko';return;
     }
+    // Step 2: Confirm email directly
+    await api('/rest/v1/rpc/confirm_user_email',{method:'POST',body:JSON.stringify({user_id:empId})}).catch(function(){});
     empId=fd.user_id;
   } else {
     var r=await api('/rest/v1/profiles?id=eq.'+empId,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(payload)});
