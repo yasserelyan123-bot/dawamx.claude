@@ -566,7 +566,7 @@ async function doLogin(){
   var err=document.getElementById('l-err');
   err.textContent='';
   if(!code||!emp||!pass){err.textContent=t('err_creds');return;}
-  var email='emp'+emp+'@'+code+'.dawamx.com';
+  var email=code+'.'+emp+'@gmail.com';
   var r=await api('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:email,password:pass})});
   var d=await r.json();
   if(!r.ok){err.textContent=t('err_creds');return;}
@@ -773,7 +773,7 @@ async function changePassword(){
   if(np!==cp){msg.textContent=t('err_passmatch');msg.className='msg ko';return;}
   if(np.length<6){msg.textContent=t('err_passlen');msg.className='msg ko';return;}
   var code=getCode();var empNum=profile&&profile.employee_number||'';
-  var email='emp'+empNum+'@'+code+'.dawamx.com';
+  var email=code+'.'+empNum+'@gmail.com';
   var r=await api('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:email,password:op})});
   if(!r.ok){msg.textContent=t('err_oldpass');msg.className='msg ko';return;}
   var r2=await api('/auth/v1/user',{method:'PUT',body:JSON.stringify({password:np})});
@@ -932,7 +932,7 @@ async function saveEmployee(){
     payload.role='employee';
     msg.textContent='جاري إضافة الموظف...';msg.className='msg ok';
     var code=sessionStorage.getItem('dx_code')||'ahlia';
-    var email='emp'+payload.employee_number+'@'+code+'.dawamx.com';
+    var email=code+'.'+payload.employee_number+'@gmail.com';
     // Step 1: Create auth account via signup
     var signupRes=await fetch(SB+'/auth/v1/signup',{
       method:'POST',
