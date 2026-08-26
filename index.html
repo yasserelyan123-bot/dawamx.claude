@@ -566,10 +566,10 @@ async function doLogin(){
   var err=document.getElementById('l-err');
   err.textContent='';
   if(!code||!emp||!pass){err.textContent=t('err_creds');return;}
-  var email=code+'.'+emp+'@gmail.com';
+  var email=emp+'.'+code+'@outlook.com';
   var r=await api('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:email,password:pass})});
   var d=await r.json();
-  if(!r.ok){err.textContent=t('err_creds');return;}
+  if(!r.ok){err.textContent=t('err_creds')+' ['+(d.error_code||d.error||'')+': '+(d.msg||d.error_description||'HTTP '+r.status)+']';return;}
   setToken(d.access_token);setUserId(d.user.id);
   sessionStorage.setItem('dx_code',code);
   await initUser(d.user.id);
@@ -773,7 +773,7 @@ async function changePassword(){
   if(np!==cp){msg.textContent=t('err_passmatch');msg.className='msg ko';return;}
   if(np.length<6){msg.textContent=t('err_passlen');msg.className='msg ko';return;}
   var code=getCode();var empNum=profile&&profile.employee_number||'';
-  var email=code+'.'+empNum+'@gmail.com';
+  var email=empNum+'.'+code+'@outlook.com';
   var r=await api('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:email,password:op})});
   if(!r.ok){msg.textContent=t('err_oldpass');msg.className='msg ko';return;}
   var r2=await api('/auth/v1/user',{method:'PUT',body:JSON.stringify({password:np})});
@@ -932,7 +932,7 @@ async function saveEmployee(){
     payload.role='employee';
     msg.textContent='جاري إضافة الموظف...';msg.className='msg ok';
     var code=sessionStorage.getItem('dx_code')||'ahlia';
-    var email=code+'.'+payload.employee_number+'@gmail.com';
+    var email=payload.employee_number+'.'+code+'@outlook.com';
     // Step 1: Create auth account via signup
     var signupRes=await fetch(SB+'/auth/v1/signup',{
       method:'POST',
@@ -947,7 +947,13 @@ async function saveEmployee(){
     }
     // Step 2: Confirm email directly
     await api('/rest/v1/rpc/confirm_user_email',{method:'POST',body:JSON.stringify({user_id:empId})}).catch(function(){});
-    empId=fd.user_id;
+    // Step 3: Save the employee's profile data
+    var pr=await api('/rest/v1/profiles?id=eq.'+empId,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(payload)});
+    var prData=await pr.json().catch(function(){return null;});
+    if(!pr.ok||!prData||!prData.length){
+      msg.textContent='تم إنشاء الحساب لكن فشل حفظ بيانات البروفايل: '+(prData&&(prData.message||prData.error)||('HTTP '+pr.status));
+      msg.className='msg ko';return;
+    }
   } else {
     var r=await api('/rest/v1/profiles?id=eq.'+empId,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(payload)});
     if(!r.ok){msg.textContent=t('msg_err');msg.className='msg ko';return;}
