@@ -475,6 +475,7 @@ body{background:#10172A;color:#F5F3EC;font-family:'IBM Plex Sans Arabic','Noto S
 const SB='https://hldtyfdgvraveadfllsz.supabase.co';
 const KEY='sb_publishable_R2_-i4lG2pfwaUbr0LR_kg_4SHmo4q2';
 function getToken(){return sessionStorage.getItem('dx_token');}
+function buildEmail(empNum,code){return 'emp'+empNum+'@'+code+'.dawamx.local';}
 function setToken(t){t?sessionStorage.setItem('dx_token',t):sessionStorage.removeItem('dx_token');}
 function getUserId(){return sessionStorage.getItem('dx_uid');}
 function setUserId(u){u?sessionStorage.setItem('dx_uid',u):sessionStorage.removeItem('dx_uid');}
@@ -566,7 +567,7 @@ async function doLogin(){
   var err=document.getElementById('l-err');
   err.textContent='';
   if(!code||!emp||!pass){err.textContent=t('err_creds');return;}
-  var email=emp+'.'+code+'@outlook.com';
+  var email=buildEmail(emp,code);
   var r=await api('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:email,password:pass})});
   var d=await r.json();
   if(!r.ok){err.textContent=t('err_creds')+' ['+(d.error_code||d.error||'')+': '+(d.msg||d.error_description||'HTTP '+r.status)+']';return;}
@@ -773,7 +774,7 @@ async function changePassword(){
   if(np!==cp){msg.textContent=t('err_passmatch');msg.className='msg ko';return;}
   if(np.length<6){msg.textContent=t('err_passlen');msg.className='msg ko';return;}
   var code=getCode();var empNum=profile&&profile.employee_number||'';
-  var email=empNum+'.'+code+'@outlook.com';
+  var email=buildEmail(empNum,code);
   var r=await api('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:email,password:op})});
   if(!r.ok){msg.textContent=t('err_oldpass');msg.className='msg ko';return;}
   var r2=await api('/auth/v1/user',{method:'PUT',body:JSON.stringify({password:np})});
