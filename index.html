@@ -933,17 +933,22 @@ async function saveEmployee(){
     payload.status=payload.status||'active';
     msg.textContent='جاري إضافة الموظف...';msg.className='msg ok';
     // Create the account server-side (no confirmation email is sent this way)
-    var fr=await fetch(SB+'/functions/v1/create-employee',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
-      body:JSON.stringify(Object.assign({},payload,{password:pass}))
-    });
-    var fd=await fr.json().catch(function(){return{};});
-    if(!fr.ok||!fd.user_id){
-      msg.textContent='خطأ: '+(fd.error||fd.message||fd.msg||'فشل إنشاء الحساب');
+    try{
+      var fr=await fetch(SB+'/functions/v1/bright-endpoint',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
+        body:JSON.stringify(Object.assign({},payload,{password:pass}))
+      });
+      var fd=await fr.json().catch(function(){return{};});
+      if(!fr.ok||!fd.user_id){
+        msg.textContent='خطأ: '+(fd.error||fd.message||fd.msg||'فشل إنشاء الحساب');
+        msg.className='msg ko';return;
+      }
+      empId=fd.user_id;
+    }catch(e){
+      msg.textContent='تعذر الاتصال بالسيرفر: '+e.message;
       msg.className='msg ko';return;
     }
-    empId=fd.user_id;
   } else {
     var r=await api('/rest/v1/profiles?id=eq.'+empId,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(payload)});
     if(!r.ok){msg.textContent=t('msg_err');msg.className='msg ko';return;}
@@ -1210,7 +1215,7 @@ async function confirmImport(){
     if(!name||!empNum){failed++;continue;}
     try{
       var payload={company_id:companyId,full_name:name,employee_number:empNum,phone:String(r[2]||'').trim()||null,job_title:String(r[3]||'').trim()||null,hire_date:r[4]?new Date(r[4]).toLocaleDateString('en-CA'):null,nationality:String(r[5]||'').trim()||null,civil_id_number:String(r[6]||'').trim()||null,role:'employee',status:'active'};
-      var fr=await fetch(SB+'/functions/v1/create-employee',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},body:JSON.stringify(Object.assign({},payload,{password:defPass}))});
+      var fr=await fetch(SB+'/functions/v1/bright-endpoint',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},body:JSON.stringify(Object.assign({},payload,{password:defPass}))});
       var fd=await fr.json();
       if(fr.ok&&fd.user_id){
         var empId=fd.user_id;
