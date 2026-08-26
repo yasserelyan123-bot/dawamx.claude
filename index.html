@@ -930,30 +930,20 @@ async function saveEmployee(){
     var pass=document.getElementById('ef-pass').value.trim();
     if(!pass){msg.textContent=t('ef_lbl_pass');msg.className='msg ko';return;}
     payload.role='employee';
+    payload.status=payload.status||'active';
     msg.textContent='جاري إضافة الموظف...';msg.className='msg ok';
-    var code=sessionStorage.getItem('dx_code')||'ahlia';
-    var email=payload.employee_number+'.'+code+'@outlook.com';
-    // Step 1: Create auth account via signup
-    var signupRes=await fetch(SB+'/auth/v1/signup',{
+    // Create the account server-side (no confirmation email is sent this way)
+    var fr=await fetch(SB+'/functions/v1/create-employee',{
       method:'POST',
-      headers:{'Content-Type':'application/json','apikey':KEY},
-      body:JSON.stringify({email:email,password:pass})
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
+      body:JSON.stringify(Object.assign({},payload,{password:pass}))
     });
-    var signupData=await signupRes.json();
-    var empId=signupData.id||(signupData.user&&signupData.user.id);
-    if(!empId){
-      msg.textContent='خطأ: '+(signupData.error_description||signupData.message||signupData.msg||'فشل إنشاء الحساب');
+    var fd=await fr.json().catch(function(){return{};});
+    if(!fr.ok||!fd.user_id){
+      msg.textContent='خطأ: '+(fd.error||fd.message||fd.msg||'فشل إنشاء الحساب');
       msg.className='msg ko';return;
     }
-    // Step 2: Confirm email directly
-    await api('/rest/v1/rpc/confirm_user_email',{method:'POST',body:JSON.stringify({user_id:empId})}).catch(function(){});
-    // Step 3: Save the employee's profile data
-    var pr=await api('/rest/v1/profiles?id=eq.'+empId,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(payload)});
-    var prData=await pr.json().catch(function(){return null;});
-    if(!pr.ok||!prData||!prData.length){
-      msg.textContent='تم إنشاء الحساب لكن فشل حفظ بيانات البروفايل: '+(prData&&(prData.message||prData.error)||('HTTP '+pr.status));
-      msg.className='msg ko';return;
-    }
+    empId=fd.user_id;
   } else {
     var r=await api('/rest/v1/profiles?id=eq.'+empId,{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(payload)});
     if(!r.ok){msg.textContent=t('msg_err');msg.className='msg ko';return;}
